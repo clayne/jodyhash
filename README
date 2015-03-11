@@ -1,0 +1,8 @@
+This is Jody Bruchon's hashing function and a very simple command-line tool
+to produce hexadecimal hash strings (and also to show how to use jody_hash).
+
+The home page for this program is:
+
+https://github.com/jbruchon/jodyhash
+
+If you find this useful, send me an email to jody@jodybruchon.com :-)
