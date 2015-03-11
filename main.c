@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include "jody_hash.h"
+#include "version.h"
 
 #define BSIZE 4096
 
@@ -25,6 +26,17 @@ int main(int argc, char **argv)
 	hash_t hash = 0;
 
 	if (argc > 2) goto error_argc;
+
+	if (argc == 2 && !strcmp("-v", argv[1])) {
+		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s)\n", VER, VERDATE);
+		exit(EXIT_SUCCESS);
+	}
+	if (argc == 2 && !strcmp("-h", argv[1])) {
+		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s)\n", VER, VERDATE);
+		fprintf(stderr, "usage: %s [file_to_hash]\n", argv[0]);
+		fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
+		exit(EXIT_FAILURE);
+	}
 
 	/* Read from stdin */
 	if (argc == 1 || !strcmp("-", argv[1])) {
