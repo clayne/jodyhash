@@ -16,8 +16,8 @@ sysconfdir=${prefix}/etc
 
 all: jodyhash
 
-jodyhash: jody_hash.o jodyhash.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) -o jodyhash jody_hash.o jodyhash.o
+jodyhash: jody_hash.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) -o jodyhash jody_hash.o main.o
 
 .c.o:
 	$(CC) -c $(BUILD_CFLAGS) $(FUSE_CFLAGS) $(CFLAGS) $<
