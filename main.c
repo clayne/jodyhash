@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include "jody_hash.h"
 
@@ -31,19 +32,42 @@
 int main(int argc, char **argv)
 {
 	unsigned char blk[BSIZE];
-	int i;
+	char name[PATH_MAX];
+	size_t i;
+	FILE *fp;
 	hash_t hash = 0;
 
-	while ((i = fread(blk, 1, BSIZE, stdin))) {
-		if (ferror(stdin)) goto error_read;
+	if (argc > 2) goto error_argc;
+
+	/* Read from stdin */
+	if (argc == 1 || !strcmp("-", argv[1])) {
+		fp = stdin;
+		strncpy(name, "(stdin)", PATH_MAX);
+	} else {
+		fp = fopen(argv[1], "r");
+		strncpy(name, argv[1], PATH_MAX);
+	}
+
+	if (!fp) goto error_open;
+
+	while ((i = fread(blk, 1, BSIZE, fp))) {
+		if (ferror(fp)) goto error_read;
 		hash = jody_block_hash((hash_t *)blk, hash, i);
+		if (feof(fp)) break;
 	}
 	printf("%016lx\n", hash);
+	fclose(fp);
 
 	exit(EXIT_SUCCESS);
 
+error_open:
+	fprintf(stderr, "error: cannot open: %s\n", name);
+	exit(EXIT_FAILURE);
+error_argc:
+	fprintf(stderr, "error: only specify one file name (none or '-' to read from stdin)\n");
+	exit(EXIT_FAILURE);
 error_read:
-	fprintf(stderr, "Error reading file %s\n", "stdin");
+	fprintf(stderr, "error reading file: %s\n", name);
 	exit(EXIT_FAILURE);
 }
 
