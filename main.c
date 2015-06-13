@@ -15,11 +15,11 @@
 #include "jody_hash.h"
 #include "version.h"
 
-#define BSIZE 4096
+#define BSIZE 65536
 
 int main(int argc, char **argv)
 {
-	unsigned char blk[BSIZE];
+	hash_t blk[(BSIZE / sizeof(hash_t))];
 	char name[PATH_MAX];
 	size_t i;
 	FILE *fp;
@@ -49,9 +49,9 @@ int main(int argc, char **argv)
 
 	if (!fp) goto error_open;
 
-	while ((i = fread(blk, 1, BSIZE, fp))) {
+	while ((i = fread((void *)blk, 1, BSIZE, fp))) {
 		if (ferror(fp)) goto error_read;
-		hash = jody_block_hash((hash_t *)blk, hash, i);
+		hash = jody_block_hash(blk, hash, i);
 		if (feof(fp)) break;
 	}
 	printf("%016lx\n", hash);
