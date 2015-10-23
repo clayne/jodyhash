@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
 		hash = jody_block_hash(blk, hash, i);
 		if (feof(fp)) break;
 	}
-	printf("%016lx\n", hash);
+	printf("%016" PRIx64 "\n", hash);
 	fclose(fp);
 
 	exit(EXIT_SUCCESS);
