@@ -16,6 +16,11 @@ datarootdir=${prefix}/share
 datadir=${datarootdir}
 sysconfdir=${prefix}/etc
 
+# MinGW needs this for printf() conversions to work
+ifeq ($(OS), Windows_NT)
+	BUILD_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1
+endif
+
 all: jodyhash
 
 jodyhash: jody_hash.o main.o
