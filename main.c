@@ -16,6 +16,16 @@
 #include "jody_hash.h"
 #include "version.h"
 
+/* Detect Windows and modify as needed */
+#if defined _WIN32 || defined __CYGWIN__
+ #define ON_WINDOWS 1
+ #ifndef WIN32_LEAN_AND_MEAN
+  #define WIN32_LEAN_AND_MEAN
+ #endif
+ #include <windows.h>
+ #include <io.h>
+#endif
+
 #define BSIZE 65536
 
 int main(int argc, char **argv)
@@ -25,6 +35,7 @@ int main(int argc, char **argv)
 	size_t i;
 	FILE *fp;
 	hash_t hash = 0;
+	intmax_t bytes = 0;
 
 	if (argc > 2) goto error_argc;
 
@@ -41,10 +52,13 @@ int main(int argc, char **argv)
 
 	/* Read from stdin */
 	if (argc == 1 || !strcmp("-", argv[1])) {
+#ifdef ON_WINDOWS
+		_setmode(_fileno(stdin), _O_BINARY);
+#endif
 		fp = stdin;
 		strncpy(name, "(stdin)", PATH_MAX);
 	} else {
-		fp = fopen(argv[1], "r");
+		fp = fopen(argv[1], "rb");
 		strncpy(name, argv[1], PATH_MAX);
 	}
 
@@ -52,10 +66,12 @@ int main(int argc, char **argv)
 
 	while ((i = fread((void *)blk, 1, BSIZE, fp))) {
 		if (ferror(fp)) goto error_read;
+		bytes += i;
 		hash = jody_block_hash(blk, hash, i);
 		if (feof(fp)) break;
 	}
 	printf("%016" PRIx64 "\n", hash);
+	fprintf(stderr, "processed %jd bytes\n", bytes);
 	fclose(fp);
 
 	exit(EXIT_SUCCESS);
