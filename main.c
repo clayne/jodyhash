@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	size_t i;
 	FILE *fp;
 	hash_t hash = 0;
-	intmax_t bytes = 0;
+	//intmax_t bytes = 0;
 
 	if (argc > 2) goto error_argc;
 
@@ -66,12 +66,12 @@ int main(int argc, char **argv)
 
 	while ((i = fread((void *)blk, 1, BSIZE, fp))) {
 		if (ferror(fp)) goto error_read;
-		bytes += i;
+		//bytes += i;
 		hash = jody_block_hash(blk, hash, i);
 		if (feof(fp)) break;
 	}
 	printf("%016" PRIx64 "\n", hash);
-	fprintf(stderr, "processed %jd bytes\n", bytes);
+	//fprintf(stderr, "processed %jd bytes\n", bytes);
 	fclose(fp);
 
 	exit(EXIT_SUCCESS);
