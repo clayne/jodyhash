@@ -24,10 +24,10 @@ endif
 all: jodyhash
 
 jodyhash: jody_hash.o main.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) -o jodyhash jody_hash.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o main.o
 
 .c.o:
-	$(CC) -c $(BUILD_CFLAGS) $(FUSE_CFLAGS) $(CFLAGS) $<
+	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(CFLAGS_EXTRA) $<
 
 clean:
 	rm -f *.o *~ .*un~ jodyhash debug.log *.?.gz
