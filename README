@@ -1,5 +1,13 @@
 This is Jody Bruchon's hashing function and a very simple command-line tool
 to produce hexadecimal hash strings (and also to show how to use jody_hash).
+It can be built to produce 64-bit, 32-bit, and 16-bit hash variants. When
+building, the default is 64-bit, but can be overridden like so:
+
+make CFLAGS_EXTRA=-DJODY_HASH_WIDTH=32
+
+This will generate a 32-bit width version of the program. Obviously, the
+different widths are incompatible with each other. The program will tell
+you what bit width it was built for when invoked with the -v option.
 
 The home page for this program is:
 

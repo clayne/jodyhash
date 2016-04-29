@@ -40,11 +40,11 @@ int main(int argc, char **argv)
 	if (argc > 2) goto error_argc;
 
 	if (argc == 2 && !strcmp("-v", argv[1])) {
-		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s)\n", VER, VERDATE);
+		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
 		exit(EXIT_SUCCESS);
 	}
 	if (argc == 2 && !strcmp("-h", argv[1])) {
-		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s)\n", VER, VERDATE);
+		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
 		fprintf(stderr, "usage: %s [file_to_hash]\n", argv[0]);
 		fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
 		exit(EXIT_FAILURE);
@@ -70,7 +70,15 @@ int main(int argc, char **argv)
 		hash = jody_block_hash(blk, hash, i);
 		if (feof(fp)) break;
 	}
+#if JODY_HASH_WIDTH == 64
 	printf("%016" PRIx64 "\n", hash);
+#endif
+#if JODY_HASH_WIDTH == 32
+	printf("%08" PRIx32 "\n", hash);
+#endif
+#if JODY_HASH_WIDTH == 16
+	printf("%04" PRIx16 "\n", hash);
+#endif
 	//fprintf(stderr, "processed %jd bytes\n", bytes);
 	fclose(fp);
 
