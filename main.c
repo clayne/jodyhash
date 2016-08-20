@@ -26,7 +26,9 @@
  #include <io.h>
 #endif
 
+#ifndef BSIZE
 #define BSIZE 65536
+#endif
 
 int main(int argc, char **argv)
 {
