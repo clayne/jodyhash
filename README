@@ -9,6 +9,12 @@ This will generate a 32-bit width version of the program. Obviously, the
 different widths are incompatible with each other. The program will tell
 you what bit width it was built for when invoked with the -v option.
 
+If you wish to plug jodyhash into any place where md5sum, sha1sum, and
+friends are already used, there is a basic compatibility option '-s' that
+will print hashes plus file names with a leading asterisk. Remember that
+jodyhash is not a "secure hash function" so don't use it as a signature
+mechanism for authenticating anything!
+
 The home page for this program is:
 
 https://github.com/jbruchon/jodyhash

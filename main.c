@@ -27,7 +27,7 @@
 #endif
 
 #ifndef BSIZE
-#define BSIZE 65536
+#define BSIZE 131072
 #endif
 
 int main(int argc, char **argv)
