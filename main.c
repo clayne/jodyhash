@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	static char name[PATH_MAX];
 	static size_t i;
 	static FILE *fp;
-	static hash_t hash = 0;
+	static hash_t hash;
 	static int argnum = 1;
 	static int outmode = 0;
 	//intmax_t bytes = 0;
@@ -59,13 +59,14 @@ int main(int argc, char **argv)
 	}
 
 	do {
+		hash = 0;
 		/* Read from stdin */
-		if (argc == 1 || !strcmp("-", argv[1])) {
+		if (argc == 1 || !strcmp("-", argv[argnum])) {
 #ifdef ON_WINDOWS
 			_setmode(_fileno(stdin), _O_BINARY);
 #endif
 			fp = stdin;
-			strncpy(name, "(stdin)", PATH_MAX);
+			strncpy(name, "-", PATH_MAX);
 		} else {
 			fp = fopen(argv[argnum], "rb");
 			strncpy(name, argv[argnum], PATH_MAX);
