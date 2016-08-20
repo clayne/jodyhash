@@ -30,14 +30,14 @@
 
 int main(int argc, char **argv)
 {
-	hash_t blk[(BSIZE / sizeof(hash_t))];
-	char name[PATH_MAX];
-	size_t i;
-	FILE *fp;
-	hash_t hash = 0;
+	static hash_t blk[(BSIZE / sizeof(hash_t))];
+	static char name[PATH_MAX];
+	static size_t i;
+	static FILE *fp;
+	static hash_t hash = 0;
+	static int argnum = 1;
+	static int outmode = 0;
 	//intmax_t bytes = 0;
-
-	if (argc > 2) goto error_argc;
 
 	if (argc == 2 && !strcmp("-v", argv[1])) {
 		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
@@ -45,50 +45,58 @@ int main(int argc, char **argv)
 	}
 	if (argc == 2 && !strcmp("-h", argv[1])) {
 		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
-		fprintf(stderr, "usage: %s [file_to_hash]\n", argv[0]);
+		fprintf(stderr, "usage: %s [-s] [file_to_hash]\n", argv[0]);
 		fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
+		fprintf(stderr, "   -s   Output in md5sum style instead of bare hashes\n");
 		exit(EXIT_FAILURE);
 	}
 
-	/* Read from stdin */
-	if (argc == 1 || !strcmp("-", argv[1])) {
+	if (argc > 2 && !strcmp("-s", argv[1])) {
+		outmode = 1;
+		argnum++;
+	}
+
+	do {
+		/* Read from stdin */
+		if (argc == 1 || !strcmp("-", argv[1])) {
 #ifdef ON_WINDOWS
-		_setmode(_fileno(stdin), _O_BINARY);
+			_setmode(_fileno(stdin), _O_BINARY);
 #endif
-		fp = stdin;
-		strncpy(name, "(stdin)", PATH_MAX);
-	} else {
-		fp = fopen(argv[1], "rb");
-		strncpy(name, argv[1], PATH_MAX);
-	}
+			fp = stdin;
+			strncpy(name, "(stdin)", PATH_MAX);
+		} else {
+			fp = fopen(argv[argnum], "rb");
+			strncpy(name, argv[argnum], PATH_MAX);
+		}
 
-	if (!fp) goto error_open;
+		if (!fp) goto error_open;
 
-	while ((i = fread((void *)blk, 1, BSIZE, fp))) {
-		if (ferror(fp)) goto error_read;
-		//bytes += i;
-		hash = jody_block_hash(blk, hash, i);
-		if (feof(fp)) break;
-	}
+		while ((i = fread((void *)blk, 1, BSIZE, fp))) {
+			if (ferror(fp)) goto error_read;
+			//bytes += i;
+			hash = jody_block_hash(blk, hash, i);
+			if (feof(fp)) break;
+		}
 #if JODY_HASH_WIDTH == 64
-	printf("%016" PRIx64 "\n", hash);
+		printf("%016" PRIx64, hash);
 #endif
 #if JODY_HASH_WIDTH == 32
-	printf("%08" PRIx32 "\n", hash);
+		printf("%08" PRIx32, hash);
 #endif
 #if JODY_HASH_WIDTH == 16
-	printf("%04" PRIx16 "\n", hash);
+		printf("%04" PRIx16, hash);
 #endif
-	//fprintf(stderr, "processed %jd bytes\n", bytes);
-	fclose(fp);
+		if (outmode) printf(" *%s\n", name);
+		else printf("\n");
+		//fprintf(stderr, "processed %jd bytes\n", bytes);
+		fclose(fp);
+		argnum++;
+	} while (argnum < argc);
 
 	exit(EXIT_SUCCESS);
 
 error_open:
 	fprintf(stderr, "error: cannot open: %s\n", name);
-	exit(EXIT_FAILURE);
-error_argc:
-	fprintf(stderr, "error: only specify one file name (none or '-' to read from stdin)\n");
 	exit(EXIT_FAILURE);
 error_read:
 	fprintf(stderr, "error reading file: %s\n", name);
