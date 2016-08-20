@@ -60,12 +60,12 @@ int main(int argc, char **argv)
 
 	do {
 		/* Read from stdin */
-		if (!strcmp("-", argv[argnum])) {
+		if (argc == 1 || !strcmp("-", argv[1])) {
 #ifdef ON_WINDOWS
 			_setmode(_fileno(stdin), _O_BINARY);
 #endif
 			fp = stdin;
-			*name = '-'; *(name + 1) = '\0';
+			strncpy(name, "(stdin)", PATH_MAX);
 		} else {
 			fp = fopen(argv[argnum], "rb");
 			strncpy(name, argv[argnum], PATH_MAX);
