@@ -2,7 +2,6 @@ CC=gcc
 #CFLAGS=-Os -flto -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
 CFLAGS=-O2
 #CFLAGS=-Og -g3
-CFLAGS += $(CFLAGS_EXTRA)
 BUILD_CFLAGS = -std=gnu99 -I. -D_FILE_OFFSET_BITS=64 -pipe -fstrict-aliasing
 BUILD_CFLAGS += -Wall -Wextra -Wcast-align -Wstrict-aliasing -pedantic -Wstrict-overflow
 #LDFLAGS=-s -Wl,--gc-sections
@@ -18,7 +17,7 @@ sysconfdir=${prefix}/etc
 
 # MinGW needs this for printf() conversions to work
 ifeq ($(OS), Windows_NT)
-	BUILD_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1
+	BUILD_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1 -municode
 endif
 
 all: jodyhash
