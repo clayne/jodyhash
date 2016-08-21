@@ -24,11 +24,11 @@
  #endif
  #include <windows.h>
  #include <io.h>
- #define ERR(a) { _setmode(_fileno(stderr), _O_U16TEXT); \
+ #define ERR(a,b) { _setmode(_fileno(stderr), _O_U16TEXT); \
 		 fwprintf(stderr, L"%S\n", a); \
 		 _setmode(_fileno(stderr), _O_U16TEXT); }
 #else
- #define ERR(a) (fprintf(stderr, "%s\n", a);)
+ #define ERR(a,b) (fprintf(stderr, "%s\n", b);)
 #endif
 
 #ifndef BSIZE
@@ -161,11 +161,11 @@ int main(int argc, char **argv)
 
 error_open:
 	fprintf(stderr, "error: cannot open: ");
-	ERR(wname);
+	ERR(wname, name);
 	exit(EXIT_FAILURE);
 error_read:
 	fprintf(stderr, "error reading file: ");
-	ERR(wname);
+	ERR(wname, name);
 	exit(EXIT_FAILURE);
 #ifdef UNICODE
 error_oom:
