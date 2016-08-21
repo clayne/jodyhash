@@ -28,7 +28,7 @@
 		 fwprintf(stderr, L"%S\n", a); \
 		 _setmode(_fileno(stderr), _O_U16TEXT); }
 #else
- #define ERR(a,b) (fprintf(stderr, "%s\n", b);)
+ #define ERR(a,b) fprintf(stderr, "%s\n", b);
 #endif
 
 #ifndef BSIZE
