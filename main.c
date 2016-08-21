@@ -24,13 +24,53 @@
  #endif
  #include <windows.h>
  #include <io.h>
+ #define ERR(a) { _setmode(_fileno(stderr), _O_U16TEXT); \
+		 fwprintf(stderr, L"%S\n", a); \
+		 _setmode(_fileno(stderr), _O_U16TEXT); }
+#else
+ #define ERR(a) (fprintf(stderr, "%s\n", a);)
 #endif
 
 #ifndef BSIZE
 #define BSIZE 131072
 #endif
 
+#ifdef ON_WINDOWS
+/* Copy Windows wide character arguments to UTF-8 */
+void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
+{
+	char temp[PATH_MAX + 1];
+	int len;
+
+	if (!argv) goto error_bad_argv;
+	for (int counter = 0; counter < argc; counter++) {
+		len = WideCharToMultiByte(CP_UTF8, 0, wargv[counter],
+				-1, (LPSTR)&temp, PATH_MAX * 2, NULL, NULL);
+		if (len < 1) goto error_wc2mb;
+
+		argv[counter] = (char *)malloc(len + 1);
+		if (!argv[counter]) goto error_oom;
+		strncpy(argv[counter], temp, len + 1);
+	}
+	return;
+
+error_bad_argv:
+	fprintf(stderr, "fatal: bad argv pointer\n");
+	exit(EXIT_FAILURE);
+error_wc2mb:
+	fprintf(stderr, "fatal: WideCharToMultiByte failed\n");
+	exit(EXIT_FAILURE);
+error_oom:
+	fprintf(stderr, "out of memory\n");
+	exit(EXIT_FAILURE);
+}
+#endif /* ON_WINDOWS */
+
+#ifdef UNICODE
+int wmain(int argc, wchar_t **wargv)
+#else
 int main(int argc, char **argv)
+#endif
 {
 	static hash_t blk[(BSIZE / sizeof(hash_t))];
 	static char name[PATH_MAX];
@@ -40,6 +80,15 @@ int main(int argc, char **argv)
 	static int argnum = 1;
 	static int outmode = 0;
 	//intmax_t bytes = 0;
+
+#ifdef UNICODE
+	static wchar_t wname[PATH_MAX];
+	/* Create a UTF-8 **argv from the wide version */
+	static char **argv;
+	argv = (char **)malloc(sizeof(char *) * argc);
+	if (!argv) goto error_oom;
+	widearg_to_argv(argc, wargv, argv);
+#endif /* UNICODE */
 
 	if (argc == 2 && !strcmp("-v", argv[1])) {
 		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
@@ -62,14 +111,19 @@ int main(int argc, char **argv)
 		hash = 0;
 		/* Read from stdin */
 		if (argc == 1 || !strcmp("-", argv[argnum])) {
+			strncpy(name, "-", PATH_MAX);
 #ifdef ON_WINDOWS
 			_setmode(_fileno(stdin), _O_BINARY);
 #endif
 			fp = stdin;
-			strncpy(name, "-", PATH_MAX);
 		} else {
-			fp = fopen(argv[argnum], "rb");
 			strncpy(name, argv[argnum], PATH_MAX);
+#ifdef UNICODE
+			fp = _wfopen(wargv[argnum], L"rbS");
+			if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, wname, PATH_MAX * 4)) goto error_mb2wc;
+#else
+			fp = fopen(argv[argnum], "rb");
+#endif
 		}
 
 		if (!fp) goto error_open;
@@ -89,8 +143,15 @@ int main(int argc, char **argv)
 #if JODY_HASH_WIDTH == 16
 		printf("%04" PRIx16, hash);
 #endif
+#ifdef UNICODE
+		_setmode(_fileno(stdout), _O_U16TEXT);
+		if (outmode) wprintf(L" *%S\n", wargv[argnum]);
+		else wprintf(L"\n");
+		_setmode(_fileno(stdout), _O_TEXT);
+#else
 		if (outmode) printf(" *%s\n", name);
 		else printf("\n");
+#endif /* UNICODE */
 		//fprintf(stderr, "processed %jd bytes\n", bytes);
 		fclose(fp);
 		argnum++;
@@ -99,10 +160,20 @@ int main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 
 error_open:
-	fprintf(stderr, "error: cannot open: %s\n", name);
+	fprintf(stderr, "error: cannot open: ");
+	ERR(wname);
 	exit(EXIT_FAILURE);
 error_read:
-	fprintf(stderr, "error reading file: %s\n", name);
+	fprintf(stderr, "error reading file: ");
+	ERR(wname);
 	exit(EXIT_FAILURE);
+#ifdef UNICODE
+error_oom:
+	fprintf(stderr, "out of memory\n");
+	exit(EXIT_FAILURE);
+error_mb2wc:
+	fprintf(stderr, "fatal: MultiByteToWideChar failed\n");
+	exit(EXIT_FAILURE);
+#endif
 }
 
