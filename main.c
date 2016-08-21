@@ -24,6 +24,7 @@
  #endif
  #include <windows.h>
  #include <io.h>
+ /* Output end of error string with Win32 Unicode as needed */
  #define ERR(a,b) { _setmode(_fileno(stderr), _O_U16TEXT); \
 		 fwprintf(stderr, L"%S\n", a); \
 		 _setmode(_fileno(stderr), _O_U16TEXT); }
@@ -35,9 +36,9 @@
 #define BSIZE 131072
 #endif
 
-#ifdef ON_WINDOWS
+#ifdef UNICODE
 /* Copy Windows wide character arguments to UTF-8 */
-void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
+static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
 {
 	char temp[PATH_MAX + 1];
 	int len;
@@ -64,13 +65,13 @@ error_oom:
 	fprintf(stderr, "out of memory\n");
 	exit(EXIT_FAILURE);
 }
-#endif /* ON_WINDOWS */
 
-#ifdef UNICODE
+
+/* Unicode on Windows requires wmain() and the -municode compiler switch */
 int wmain(int argc, wchar_t **wargv)
 #else
 int main(int argc, char **argv)
-#endif
+#endif /* UNICODE */
 {
 	static hash_t blk[(BSIZE / sizeof(hash_t))];
 	static char name[PATH_MAX];
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 			if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, wname, PATH_MAX * 4)) goto error_mb2wc;
 #else
 			fp = fopen(argv[argnum], "rb");
-#endif
+#endif /* UNICODE */
 		}
 
 		if (!fp) goto error_open;
