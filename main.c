@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 			strncpy(name, argv[argnum], PATH_MAX);
 #ifdef UNICODE
 			fp = _wfopen(wargv[argnum], L"rbS");
-			if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, wname, PATH_MAX * 4)) goto error_mb2wc;
+			if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, wname, PATH_MAX)) goto error_mb2wc;
 #else
 			fp = fopen(argv[argnum], "rb");
 #endif /* UNICODE */
