@@ -27,7 +27,7 @@
  /* Output end of error string with Win32 Unicode as needed */
  #define ERR(a,b) { _setmode(_fileno(stderr), _O_U16TEXT); \
 		 fwprintf(stderr, L"%S\n", a); \
-		 _setmode(_fileno(stderr), _O_U16TEXT); }
+		 _setmode(_fileno(stderr), _O_TEXT); }
 #else
  #define ERR(a,b) fprintf(stderr, "%s\n", b);
 #endif
