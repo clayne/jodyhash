@@ -10,10 +10,10 @@
 int main(int argc, char **argv)
 {
 	static struct timeval starttime, endtime;
-	static int64_t elapsed;
+	static long long elapsed;
 	static hash_t hash = 0;
-	static unsigned long iterations, cnt;
-	static char block[BLOCKSIZE];
+	static unsigned long long iterations, cnt;
+	static hash_t block[BLOCKSIZE / sizeof(hash_t)];
 
 	if (argc != 2) {
 		fprintf(stderr, "Specify number of iterations to run\n");
@@ -33,10 +33,14 @@ int main(int argc, char **argv)
 	elapsed = endtime.tv_sec - starttime.tv_sec;
 	elapsed *= 1000000;
 	elapsed += (endtime.tv_usec - starttime.tv_usec);
+	if (elapsed < 1) {
+		fprintf(stderr, "Elapsed time invalid, aborting\n");
+		exit(EXIT_FAILURE);
+	}
 
-	printf("%lu blocks in %lu uSec (%lu blocks per second, %lu MB/sec overall)\n", iterations, elapsed,
-			(unsigned long)((iterations * 1000000) / elapsed),
-			(unsigned long)((iterations * 1000000) / elapsed) * BLOCKSIZE / 1048576
+	printf("%llu blocks in %lld uSec (%llu blocks per second, %llu MB/sec overall)\n", iterations, elapsed,
+			(unsigned long long)((iterations * 1000000) / elapsed),
+			(unsigned long long)((iterations * 1000000) / elapsed) * BLOCKSIZE / 1048576
 			);
 	exit(EXIT_SUCCESS);
 }
