@@ -18,6 +18,8 @@ Config.in
 # Normal output and testing dirs
 #
 /foo
+/benchmark
+/benchmark.exe
 /jodyhash
 /jodyhash.exe
 /debug.log
