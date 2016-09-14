@@ -17,20 +17,21 @@ sysconfdir=${prefix}/etc
 
 # MinGW needs this for printf() conversions to work
 ifeq ($(OS), Windows_NT)
-	BUILD_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1 -municode
+	WIN_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1 -municode
 endif
 
 all: jodyhash
 
 benchmark: jody_hash.o benchmark.o
+	$(CC) -c benchmark.c $(BUILD_CFLAGS) $(CFLAGS) $(CFLAGS_EXTRA) -o benchmark.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o benchmark jody_hash.o benchmark.o
 	./benchmark 1000000
 
 jodyhash: jody_hash.o main.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o main.o
 
 .c.o:
-	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(CFLAGS_EXTRA) $<
+	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) $<
 
 clean:
 	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz
