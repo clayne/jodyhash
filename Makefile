@@ -22,6 +22,10 @@ endif
 
 all: jodyhash
 
+benchmark: jody_hash.o benchmark.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o benchmark jody_hash.o benchmark.o
+	./benchmark 1000000
+
 jodyhash: jody_hash.o main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o main.o
 
@@ -29,10 +33,10 @@ jodyhash: jody_hash.o main.o
 	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(CFLAGS_EXTRA) $<
 
 clean:
-	rm -f *.o *~ .*un~ jodyhash debug.log *.?.gz
+	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz
 
 distclean:
-	rm -f *.o *~ .*un~ jodyhash debug.log *.?.gz *.pkg.tar.*
+	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz *.pkg.tar.*
 
 install: all
 	install -D -o root -g root -m 0755 -s jodyhash $(DESTDIR)/$(bindir)/jodyhash
