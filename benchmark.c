@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "jody_hash.h"
 
-#define BLOCKSIZE 4096
+#define BLOCKSIZE 32768
 
 int main(int argc, char **argv)
 {
