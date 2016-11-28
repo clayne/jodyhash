@@ -49,9 +49,9 @@ static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
 				-1, (LPSTR)&temp, PATH_MAX * 2, NULL, NULL);
 		if (len < 1) goto error_wc2mb;
 
-		argv[counter] = (char *)malloc(len + 1);
+		argv[counter] = (char *)malloc((size_t)len + 1);
 		if (!argv[counter]) goto error_oom;
-		strncpy(argv[counter], temp, len + 1);
+		strncpy(argv[counter], temp, (size_t)len + 1);
 	}
 	return;
 
