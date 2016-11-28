@@ -33,7 +33,7 @@
 #endif
 
 #ifndef BSIZE
-#define BSIZE 131072
+#define BSIZE 32768
 #endif
 
 #ifdef UNICODE
