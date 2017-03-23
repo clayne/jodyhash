@@ -97,13 +97,13 @@ int main(int argc, char **argv)
 	}
 	if (argc == 2 && !strcmp("-h", argv[1])) {
 		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
-		fprintf(stderr, "usage: %s [-s] [file_to_hash]\n", argv[0]);
+		fprintf(stderr, "usage: %s [-bs] [file_to_hash]\n", argv[0]);
 		fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
-		fprintf(stderr, "   -s   Output in md5sum style instead of bare hashes\n");
+		fprintf(stderr, "  -b or -s  Output in md5sum binary style instead of bare hashes\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if (argc > 2 && !strcmp("-s", argv[1])) {
+	if (argc > 2 && (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1]))) {
 		outmode = 1;
 		argnum++;
 	}
