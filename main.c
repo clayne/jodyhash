@@ -36,6 +36,8 @@
 #define BSIZE 32768
 #endif
 
+static int error = EXIT_SUCCESS;
+
 #ifdef UNICODE
 /* Copy Windows wide character arguments to UTF-8 */
 static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
@@ -80,6 +82,7 @@ int main(int argc, char **argv)
 	static hash_t hash;
 	static int argnum = 1;
 	static int outmode = 0;
+	static int read_err = 0;
 	//intmax_t bytes = 0;
 
 #ifdef UNICODE
@@ -127,14 +130,32 @@ int main(int argc, char **argv)
 #endif /* UNICODE */
 		}
 
-		if (!fp) goto error_open;
+		if (!fp) {
+			fprintf(stderr, "error: cannot open: ");
+			ERR(wname, name);
+			error = EXIT_FAILURE;
+			argnum++;
+			continue;
+		}
 
 		while ((i = fread((void *)blk, 1, BSIZE, fp))) {
-			if (ferror(fp)) goto error_read;
+			if (ferror(fp)) {
+				fprintf(stderr, "error reading file: ");
+				ERR(wname, name);
+				error = EXIT_FAILURE; read_err = 1;
+				break;
+			}
 			//bytes += i;
 			hash = jody_block_hash(blk, hash, i);
 			if (feof(fp)) break;
 		}
+
+		/* Loop without result on read errors */
+		if (read_err == 1) {
+			read_err = 0;
+			goto close_file;
+		}
+
 #if JODY_HASH_WIDTH == 64
 		printf("%016" PRIx64, hash);
 #endif
@@ -154,20 +175,12 @@ int main(int argc, char **argv)
 		else printf("\n");
 #endif /* UNICODE */
 		//fprintf(stderr, "processed %jd bytes\n", bytes);
+close_file:
 		fclose(fp);
 		argnum++;
 	} while (argnum < argc);
 
-	exit(EXIT_SUCCESS);
-
-error_open:
-	fprintf(stderr, "error: cannot open: ");
-	ERR(wname, name);
-	exit(EXIT_FAILURE);
-error_read:
-	fprintf(stderr, "error reading file: ");
-	ERR(wname, name);
-	exit(EXIT_FAILURE);
+	exit(error);
 #ifdef UNICODE
 error_oom:
 	fprintf(stderr, "out of memory\n");
