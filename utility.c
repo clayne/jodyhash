@@ -32,11 +32,33 @@
  #define ERR(a,b) fprintf(stderr, "%s\n", b);
 #endif
 
+#if JODY_HASH_WIDTH == 64
+#define PRINTHASH(a) printf("%016" PRIx64, a)
+#endif
+#if JODY_HASH_WIDTH == 32
+#define PRINTHASH(a) printf("%08" PRIx32, hash)
+#endif
+#if JODY_HASH_WIDTH == 16
+#define PRINTHASH(a) printf("%04" PRIx16, hash)
+#endif
+
 #ifndef BSIZE
 #define BSIZE 32768
 #endif
 
 static int error = EXIT_SUCCESS;
+static char *progname;
+
+static void usage(void)
+{
+	fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
+	fprintf(stderr, "usage: %s [-b|s|l] [file_to_hash]\n", progname);
+	fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
+	fprintf(stderr, "  -b|-s  Output in md5sum binary style instead of bare hashes\n");
+	fprintf(stderr, "  -l     Generate a hash for each text input line\n");
+	fprintf(stderr, "  -L     Same as -l but also prints hashed text after the hash\n");
+	exit(error);
+}
 
 #ifdef UNICODE
 /* Copy Windows wide character arguments to UTF-8 */
@@ -46,6 +68,7 @@ static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
 	int len;
 
 	if (!argv) goto error_bad_argv;
+	progname = argv[0];
 	for (int counter = 0; counter < argc; counter++) {
 		len = WideCharToMultiByte(CP_UTF8, 0, wargv[counter],
 				-1, (LPSTR)&temp, PATH_MAX * 2, NULL, NULL);
@@ -94,21 +117,19 @@ int main(int argc, char **argv)
 	widearg_to_argv(argc, wargv, argv);
 #endif /* UNICODE */
 
-	if (argc == 2 && !strcmp("-v", argv[1])) {
-		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
-		exit(EXIT_SUCCESS);
+	/* Process options */
+	if (argc > 1) {
+		if (!strcmp("-v", argv[1])) {
+			fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
+			exit(EXIT_SUCCESS);
+		}
+		if (!strcmp("-h", argv[1])) usage();
 	}
-	if (argc == 2 && !strcmp("-h", argv[1])) {
-		fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
-		fprintf(stderr, "usage: %s [-bs] [file_to_hash]\n", argv[0]);
-		fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
-		fprintf(stderr, "  -b or -s  Output in md5sum binary style instead of bare hashes\n");
-		exit(EXIT_FAILURE);
-	}
-
-	if (argc > 2 && (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1]))) {
-		outmode = 1;
-		argnum++;
+	if (argc > 2) {
+		if (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1])) outmode = 1;
+		if (!strcmp("-l", argv[1])) outmode = 2;
+		if (!strcmp("-L", argv[1])) outmode = 3;
+		if (outmode > 0) argnum++;
 	}
 
 	do {
@@ -138,6 +159,32 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		/* Line-by-line hashing with -l/-L */
+		if (outmode == 2 || outmode == 3) {
+			while (fgets((char *)blk, BSIZE, fp) != NULL) {
+				hash = 0;
+				if (ferror(fp)) {
+					fprintf(stderr, "error reading file: ");
+					ERR(wname, name);
+					error = EXIT_FAILURE; read_err = 1;
+					break;
+				}
+				/* Skip empty lines */
+				i = strlen((char *)blk);
+				if (i < 2 || *(char *)blk == '\n') continue;
+				((char *)blk)[i - 1] = '\0';
+
+				hash = jody_block_hash(blk, hash, i - 1);
+
+				PRINTHASH(hash);
+				if (outmode == 3) printf(" '%s'\n", (char *)blk);
+				else printf("\n");
+
+				if (feof(fp)) break;
+			}
+			goto close_file;
+		}
+
 		while ((i = fread((void *)blk, 1, BSIZE, fp))) {
 			if (ferror(fp)) {
 				fprintf(stderr, "error reading file: ");
@@ -156,22 +203,15 @@ int main(int argc, char **argv)
 			goto close_file;
 		}
 
-#if JODY_HASH_WIDTH == 64
-		printf("%016" PRIx64, hash);
-#endif
-#if JODY_HASH_WIDTH == 32
-		printf("%08" PRIx32, hash);
-#endif
-#if JODY_HASH_WIDTH == 16
-		printf("%04" PRIx16, hash);
-#endif
+		PRINTHASH(hash);
+
 #ifdef UNICODE
 		_setmode(_fileno(stdout), _O_U16TEXT);
-		if (outmode) wprintf(L" *%S\n", wargv[argnum]);
+		if (outmode == 1) wprintf(L" *%S\n", wargv[argnum]);
 		else wprintf(L"\n");
 		_setmode(_fileno(stdout), _O_TEXT);
 #else
-		if (outmode) printf(" *%s\n", name);
+		if (outmode == 1) printf(" *%s\n", name);
 		else printf("\n");
 #endif /* UNICODE */
 		//fprintf(stderr, "processed %jd bytes\n", bytes);
@@ -181,6 +221,7 @@ close_file:
 	} while (argnum < argc);
 
 	exit(error);
+
 #ifdef UNICODE
 error_oom:
 	fprintf(stderr, "out of memory\n");
