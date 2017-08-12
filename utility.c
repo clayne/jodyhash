@@ -172,7 +172,9 @@ int main(int argc, char **argv)
 				/* Skip empty lines */
 				i = strlen((char *)blk);
 				if (i < 2 || *(char *)blk == '\n') continue;
-				((char *)blk)[i - 1] = '\0';
+				/* Strip \r\n and \n and \r newlines */
+				if (((char *)blk)[i - 2] == '\r') ((char *)blk)[i - 2] = '\0';
+				else ((char *)blk)[i - 1] = '\0';
 
 				hash = jody_block_hash(blk, hash, i - 1);
 
