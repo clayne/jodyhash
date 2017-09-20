@@ -3,7 +3,7 @@
 #ifndef JODYHASH_VERSION_H
 #define JODYHASH_VERSION_H
 
-#define VER "5.0"
-#define VERDATE "2017-08-12"
+#define VER "5.0.1"
+#define VERDATE "2017-09-19"
 
 #endif	/* JODYHASH_VERSION_H */
