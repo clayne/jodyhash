@@ -68,7 +68,6 @@ static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
 	int len;
 
 	if (!argv) goto error_bad_argv;
-	progname = argv[0];
 	for (int counter = 0; counter < argc; counter++) {
 		len = WideCharToMultiByte(CP_UTF8, 0, wargv[counter],
 				-1, (LPSTR)&temp, PATH_MAX * 2, NULL, NULL);
@@ -117,6 +116,8 @@ int main(int argc, char **argv)
 	widearg_to_argv(argc, wargv, argv);
 #endif /* UNICODE */
 
+	progname = argv[0];
+
 	/* Process options */
 	if (argc > 1) {
 		if (!strcmp("-v", argv[1])) {
@@ -129,7 +130,7 @@ int main(int argc, char **argv)
 		if (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1])) outmode = 1;
 		if (!strcmp("-l", argv[1])) outmode = 2;
 		if (!strcmp("-L", argv[1])) outmode = 3;
-		if (outmode > 0) argnum++;
+		if (outmode > 0 || !strcmp("--", argv[1])) argnum++;
 	}
 
 	do {
