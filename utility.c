@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
 			exit(EXIT_SUCCESS);
 		}
-		if (!strcmp("-h", argv[1])) usage();
+		if (!strcmp("-h", argv[1]) || !strcmp("--help", argv[1])) usage();
 	}
 	if (argc > 2) {
 		if (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1])) outmode = 1;
