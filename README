@@ -28,6 +28,10 @@ $ dd if=/dev/zero bs=32768 count=262144 | xxh32sum -
 
 Yes, it's only 3.52% faster than xxHash64, but I'll take what I can get.
 
+If you'd like to prevent jody_hash.h from defining hash_t for compatibility,
+just "#define JODY_HASH_NOCOMPAT" before you #include and it'll only use
+jodyhash_t.
+
 The home page for this program is:
 https://github.com/jbruchon/jodyhash
 
