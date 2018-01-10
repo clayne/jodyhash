@@ -11,9 +11,9 @@ int main(int argc, char **argv)
 {
 	static struct timeval starttime, endtime;
 	static long long elapsed;
-	static hash_t hash = 0;
+	static jodyhash_t hash = 0;
 	static unsigned long long iterations, cnt;
-	static hash_t block[BLOCKSIZE / sizeof(hash_t)];
+	static jodyhash_t block[BLOCKSIZE / sizeof(jodyhash_t)];
 
 	if (argc != 2) {
 		fprintf(stderr, "Specify number of iterations to run\n");
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	}
 
 	gettimeofday(&starttime, NULL);
-	for (cnt = iterations; cnt; cnt--) hash = jody_block_hash((hash_t *)&block, hash, BLOCKSIZE);
+	for (cnt = iterations; cnt; cnt--) hash = jody_block_hash((jodyhash_t *)&block, hash, BLOCKSIZE);
 	gettimeofday(&endtime, NULL);
 	elapsed = endtime.tv_sec - starttime.tv_sec;
 	elapsed *= 1000000;

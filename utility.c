@@ -97,11 +97,11 @@ int wmain(int argc, wchar_t **wargv)
 int main(int argc, char **argv)
 #endif /* UNICODE */
 {
-	static hash_t blk[(BSIZE / sizeof(hash_t))];
+	static jodyhash_t blk[(BSIZE / sizeof(jodyhash_t))];
 	static char name[PATH_MAX];
 	static size_t i;
 	static FILE *fp;
-	static hash_t hash;
+	static jodyhash_t hash;
 	static int argnum = 1;
 	static int outmode = 0;
 	static int read_err = 0;
