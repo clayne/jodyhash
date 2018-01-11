@@ -15,22 +15,16 @@ will print hashes plus file names with a leading asterisk. Remember that
 jodyhash is not a "secure hash function" so don't use it as a signature
 mechanism for authenticating anything!
 
-How does jodyhash compare to other non-cryptographic hashes like xxHash?
-Simple: it's faster! Here's an example benchmark of 64-bit jodyhash and
-the 32-bit and 64-bit variants of xxHash:
-
-$ dd if=/dev/zero bs=32768 count=262144 | jodyhash -
-8589934592 bytes (8.6 GB) copied, 4.95873 s, 1.7 GB/s
-$ dd if=/dev/zero bs=32768 count=262144 | xxh64sum -
-8589934592 bytes (8.6 GB) copied, 5.14096 s, 1.7 GB/s
-$ dd if=/dev/zero bs=32768 count=262144 | xxh32sum -
-8589934592 bytes (8.6 GB) copied, 5.33448 s, 1.6 GB/s
-
-Yes, it's only 3.52% faster than xxHash64, but I'll take what I can get.
-
 If you'd like to prevent jody_hash.h from defining hash_t for compatibility,
 just "#define JODY_HASH_NOCOMPAT" before you #include and it'll only use
 jodyhash_t.
+
+Full disclosure: SMHasher's tests indicate this hash has undesirable
+properties and is slower than some other hashes. In practice I have only
+found a single collision out of a pile of millions of strings, but you may
+want to look into t1ha or possibly xxHash64 instead. xxHash64 has a lot of
+non-C implementations available and may have better avalance properties but
+t1ha is faster than xxHash64.
 
 The home page for this program is:
 https://github.com/jbruchon/jodyhash
