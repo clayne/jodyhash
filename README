@@ -22,9 +22,11 @@ jodyhash_t.
 Full disclosure: SMHasher's tests indicate this hash has undesirable
 properties and is slower than some other hashes. In practice I have only
 found a single collision out of a pile of millions of strings, but you may
-want to look into t1ha or possibly xxHash64 instead. xxHash64 has a lot of
-non-C implementations available and may have better avalance properties but
-t1ha is faster than xxHash64.
+prefer the faster hashes t1ha or xxHash64 instead. xxHash64 has a lot of
+non-C implementations available. The SMHasher repo maintainer said that
+"it [jodyhash] isn't a great hash, but it's not a terrible one and there
+are several that are much worse." I'll take that as a compliment since
+this is the first hash I ever wrote :-)
 
 The home page for this program is:
 https://github.com/jbruchon/jodyhash
