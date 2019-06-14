@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 #endif /* UNICODE */
 {
 	static jodyhash_t blk[(BSIZE / sizeof(jodyhash_t))];
-	static char name[PATH_MAX];
+	static char name[PATH_MAX + 1];
 	static size_t i;
 	static FILE *fp;
 	static jodyhash_t hash;
