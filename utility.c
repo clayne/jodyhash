@@ -52,9 +52,10 @@ static char *progname;
 static void usage(void)
 {
 	fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
-	fprintf(stderr, "usage: %s [-b|s|l] [file_to_hash]\n", progname);
+	fprintf(stderr, "usage: %s [-b|s|n|l|L] [file_to_hash]\n", progname);
 	fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
 	fprintf(stderr, "  -b|-s  Output in md5sum binary style instead of bare hashes\n");
+	fprintf(stderr, "  -n     Output just the file name after the hash\n");
 	fprintf(stderr, "  -l     Generate a hash for each text input line\n");
 	fprintf(stderr, "  -L     Same as -l but also prints hashed text after the hash\n");
 	exit(error);
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
 	static wchar_t wname[PATH_MAX];
 	/* Create a UTF-8 **argv from the wide version */
 	static char **argv;
-	argv = (char **)malloc(sizeof(char *) * argc);
+	argv = (char **)malloc(sizeof(char *) * (unsigned int)argc);
 	if (!argv) goto error_oom;
 	widearg_to_argv(argc, wargv, argv);
 #endif /* UNICODE */
@@ -130,6 +131,7 @@ int main(int argc, char **argv)
 		if (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1])) outmode = 1;
 		if (!strcmp("-l", argv[1])) outmode = 2;
 		if (!strcmp("-L", argv[1])) outmode = 3;
+		if (!strcmp("-n", argv[1])) outmode = 4;
 		if (outmode > 0 || !strcmp("--", argv[1])) argnum++;
 	}
 
@@ -211,10 +213,12 @@ int main(int argc, char **argv)
 #ifdef UNICODE
 		_setmode(_fileno(stdout), _O_U16TEXT);
 		if (outmode == 1) wprintf(L" *%S\n", wargv[argnum]);
+		else if (outmode == 4) wprintf(L" %S\n", wargv[argnum]);
 		else wprintf(L"\n");
 		_setmode(_fileno(stdout), _O_TEXT);
 #else
 		if (outmode == 1) printf(" *%s\n", name);
+		else if (outmode == 4) printf(" %s\n", name);
 		else printf("\n");
 #endif /* UNICODE */
 		//fprintf(stderr, "processed %jd bytes\n", bytes);
