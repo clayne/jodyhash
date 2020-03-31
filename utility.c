@@ -211,11 +211,11 @@ int main(int argc, char **argv)
 		PRINTHASH(hash);
 
 #ifdef UNICODE
-		if (outmode == 0) wprintf(L"\n");
 		_setmode(_fileno(stdout), _O_U16TEXT);
-		if (outmode == 1) wprintf(L" *%S\n", wargv[argnum]);
-		else if (outmode == 4) wprintf(L" %S\n", wargv[argnum]);
+		if (outmode == 1) wprintf(L" *%S", wargv[argnum]);
+		else if (outmode == 4) wprintf(L" %S", wargv[argnum]);
 		_setmode(_fileno(stdout), _O_TEXT);
+		printf("\n");
 #else
 		if (outmode == 1) printf(" *%s\n", name);
 		else if (outmode == 4) printf(" %s\n", name);
