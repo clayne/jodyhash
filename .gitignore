@@ -24,7 +24,8 @@ Config.in
 /jodyhash.exe
 /debug.log
 /*.zip
-/jodyhash-*/
+/*.pkg.tar.*
+/jodyhash-*-*/
 
 #
 # Backups / patches
