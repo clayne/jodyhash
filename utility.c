@@ -203,13 +203,14 @@ int main(int argc, char **argv)
 			if (outmode == 5) {
 				/* Hash sub-blocks in the file */
 				const int kbsize = 4096;
+				const int kboffsize = kbsize / (int)sizeof(jodyhash_t);
 				int kblk = 0;
 				size_t kbdrop;
 
 				while (i > 0) {
 					hash = 0;
 					kbdrop = (i > kbsize) ? kbsize : i;
-					hash = jody_block_hash(blk + (kblk * kbsize), hash, kbdrop);
+					hash = jody_block_hash(blk + (kblk * kboffsize), hash, kbdrop);
 					PRINTHASH(hash); printf("\n");
 					kblk++;
 					i -= kbdrop;
