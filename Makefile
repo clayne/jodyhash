@@ -19,6 +19,7 @@ sysconfdir=${prefix}/etc
 # MinGW needs this for printf() conversions to work
 ifeq ($(OS), Windows_NT)
 	WIN_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1 -municode
+	EXT=.exe
 endif
 
 all: jodyhash
@@ -34,6 +35,8 @@ jodyhash: jody_hash.o utility.o
 .c.o:
 	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) $<
 
+stripped: jodyhash
+	strip jodyhash$(EXT)
 clean:
 	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz
 
