@@ -33,13 +33,13 @@
 #endif
 
 #if JODY_HASH_WIDTH == 64
-#define PRINTHASH(a,b) printf("%016" PRIx64 "%c", a, b)
+#define PRINTHASH(a) printf("%016" PRIx64,a)
 #endif
 #if JODY_HASH_WIDTH == 32
-#define PRINTHASH(a,b) printf("%08" PRIx32 "%c", a, b)
+#define PRINTHASH(a) printf("%08" PRIx32,a)
 #endif
 #if JODY_HASH_WIDTH == 16
-#define PRINTHASH(a,b) printf("%04" PRIx16 "%c", a, b)
+#define PRINTHASH(a) printf("%04" PRIx16,a)
 #endif
 
 #ifndef BSIZE
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 
 				hash = jody_block_hash(blk, hash, i - 1);
 
-				PRINTHASH(hash, '\0');
+				PRINTHASH(hash);
 				if (outmode == 3) printf(" '%s'\n", (char *)blk);
 				else printf("\n");
 
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 					hash = 0;
 					kbdrop = (i > kbsize) ? kbsize : i;
 					hash = jody_block_hash(blk + (kblk * kbsize), hash, kbdrop);
-					PRINTHASH(hash, '\n');
+					PRINTHASH(hash); printf("\n");
 					kblk++;
 					i -= kbdrop;
 				}
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 			goto close_file;
 		}
 
-		if (outmode != 5) PRINTHASH(hash, '\0');
+		if (outmode != 5) PRINTHASH(hash);
 
 #ifdef UNICODE
 		_setmode(_fileno(stdout), _O_U16TEXT);
