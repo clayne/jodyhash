@@ -66,5 +66,8 @@ distclean:
 install: all
 	install -D -o root -g root -m 0755 -s jodyhash $(DESTDIR)/$(bindir)/jodyhash
 
-package:
+chrootpackage:
 	+./chroot_build.sh
+
+package:
+	+./generate_packages.sh
