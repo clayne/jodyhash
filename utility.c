@@ -1,7 +1,7 @@
 /*
  * Jody Bruchon hashing function command-line utility
  *
- * Copyright (C) 2014-2020 by Jody Bruchon <jody@jodybruchon.com>
+ * Copyright (C) 2014-2022 by Jody Bruchon <jody@jodybruchon.com>
  * Released under the MIT License (see LICENSE for details)
  */
 
@@ -33,13 +33,13 @@
 #endif
 
 #if JODY_HASH_WIDTH == 64
-#define PRINTHASH(a) printf("%016" PRIx64, a)
+#define PRINTHASH(a,b) printf("%016" PRIx64 "%c", a, b)
 #endif
 #if JODY_HASH_WIDTH == 32
-#define PRINTHASH(a) printf("%08" PRIx32, hash)
+#define PRINTHASH(a,b) printf("%08" PRIx32 "%c", a, b)
 #endif
 #if JODY_HASH_WIDTH == 16
-#define PRINTHASH(a) printf("%04" PRIx16, hash)
+#define PRINTHASH(a,b) printf("%04" PRIx16 "%c", a, b)
 #endif
 
 #ifndef BSIZE
@@ -58,6 +58,7 @@ static void usage(void)
 	fprintf(stderr, "  -n     Output just the file name after the hash\n");
 	fprintf(stderr, "  -l     Generate a hash for each text input line\n");
 	fprintf(stderr, "  -L     Same as -l but also prints hashed text after the hash\n");
+	fprintf(stderr, "  -B     Output a hash for every 4096 byte block of the file\n");
 	exit(error);
 }
 
@@ -132,6 +133,7 @@ int main(int argc, char **argv)
 		if (!strcmp("-l", argv[1])) outmode = 2;
 		if (!strcmp("-L", argv[1])) outmode = 3;
 		if (!strcmp("-n", argv[1])) outmode = 4;
+		if (!strcmp("-B", argv[1])) outmode = 5;
 		if (outmode > 0 || !strcmp("--", argv[1])) argnum++;
 	}
 
@@ -181,7 +183,7 @@ int main(int argc, char **argv)
 
 				hash = jody_block_hash(blk, hash, i - 1);
 
-				PRINTHASH(hash);
+				PRINTHASH(hash, '\0');
 				if (outmode == 3) printf(" '%s'\n", (char *)blk);
 				else printf("\n");
 
@@ -198,7 +200,21 @@ int main(int argc, char **argv)
 				break;
 			}
 			//bytes += i;
-			hash = jody_block_hash(blk, hash, i);
+			if (outmode == 5) {
+				/* Hash sub-blocks in the file */
+				const int kbsize = 4096;
+				int kblk = 0;
+				size_t kbdrop;
+
+				while (i > 0) {
+					hash = 0;
+					kbdrop = (i > kbsize) ? kbsize : i;
+					hash = jody_block_hash(blk + (kblk * kbsize), hash, kbdrop);
+					PRINTHASH(hash, '\n');
+					kblk++;
+					i -= kbdrop;
+				}
+			} else hash = jody_block_hash(blk, hash, i);
 			if (feof(fp)) break;
 		}
 
@@ -208,7 +224,7 @@ int main(int argc, char **argv)
 			goto close_file;
 		}
 
-		PRINTHASH(hash);
+		if (outmode != 5) PRINTHASH(hash, '\0');
 
 #ifdef UNICODE
 		_setmode(_fileno(stdout), _O_U16TEXT);
