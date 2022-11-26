@@ -23,6 +23,8 @@ Config.in
 /jodyhash
 /jodyhash.exe
 /debug.log
+/*.zip
+/jodyhash-*/
 
 #
 # Backups / patches
