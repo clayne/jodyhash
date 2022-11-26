@@ -1,3 +1,7 @@
+jodyhash 5.1.2
+
+- Fix -B mode failing spectacularly
+
 jodyhash 5.1.1
 
 - Fix re-introduced stray nulls in output
