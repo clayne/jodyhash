@@ -20,7 +20,7 @@
 #define JODY_HASH_SHIFT 14
 #endif
 
-/* The salt value's purpose is to cause each byte in the
+/* The constant value's purpose is to cause each byte in the
  * jodyhash_t word to have a positionally dependent variation.
  * It is injected into the calculation to prevent a string of
  * identical bytes from easily producing an identical hash. */
@@ -52,7 +52,7 @@ static const jodyhash_t tail_mask[] = {
 	0x000000ff,
 	0x0000ffff,
 	0x00ffffff,
-	0xffffffff,
+	0xffffffff
 };
 #endif /* JODY_HASH_WIDTH == 32 */
 #if JODY_HASH_WIDTH == 16
@@ -60,7 +60,7 @@ static const jodyhash_t tail_mask[] = {
 static const jodyhash_t tail_mask[] = {
 	0x0000,
 	0x00ff,
-	0xffff,
+	0xffff
 };
 #endif /* JODY_HASH_WIDTH == 16 */
 
