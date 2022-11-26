@@ -1,3 +1,5 @@
+# jodyhash Makefile
+
 CC=gcc
 #CFLAGS=-Os -flto -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
 CFLAGS=-O2
@@ -16,10 +18,16 @@ datarootdir=${prefix}/share
 datadir=${datarootdir}
 sysconfdir=${prefix}/etc
 
-# MinGW needs this for printf() conversions to work
 ifeq ($(OS), Windows_NT)
+# MinGW needs this for printf() conversions to work
 	WIN_CFLAGS += -D__USE_MINGW_ANSI_STDIO=1 -municode
 	EXT=.exe
+# Windows resources for Windows XP and NT6+
+	ifeq ($(UNAME_S), MINGW32_NT-5.1)
+		OBJS += winres_xp.o
+	else
+		OBJS += winres.o
+	endif
 endif
 
 all: jodyhash
@@ -29,11 +37,19 @@ benchmark: jody_hash.o benchmark.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o benchmark jody_hash.o benchmark.o
 	./benchmark 1000000
 
-jodyhash: jody_hash.o utility.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o utility.o
+jodyhash: jody_hash.o utility.o $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o utility.o $(OBJS)
 
 .c.o:
 	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) $<
+
+winres.o: winres.rc winres.manifest.xml
+	./tune_winres.sh
+	windres winres.rc winres.o
+
+winres_xp.o: winres_xp.rc
+	./tune_winres.sh
+	windres winres_xp.rc winres_xp.o
 
 stripped: jodyhash
 	strip jodyhash$(EXT)
