@@ -53,6 +53,10 @@ winres_xp.o: winres_xp.rc
 
 stripped: jodyhash
 	strip jodyhash$(EXT)
+
+test: jodyhash
+	./test.sh
+
 clean:
 	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz
 
