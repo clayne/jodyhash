@@ -1,3 +1,7 @@
+jodyhash 5.1.1
+
+- Fix re-introduced stray nulls in output
+
 jodyhash 5.1
 
 - Add -B option for 4K block hash output
