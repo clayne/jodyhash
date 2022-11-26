@@ -1,0 +1,64 @@
+jodyhash 5.1
+
+- Add -B option for 4K block hash output
+- Add Windows resource info
+- Add EXE symbol stripping (make stripped)
+
+jodyhash 5.0.2
+
+- Add -n option to output file name after hash (without a symbol like md5sum)
+- Fix nulls being printed in output
+
+jodyhash 5.0.1
+
+- Fix usage name display
+- Allow use of '--' as first parameter
+
+jodyhash 5.0
+
+- Add -l/-L to hash files line-by-line
+- Improved hash function (much lower collision rate)
+
+jodyhash 4.1.2
+
+- Continue hashing next file even after a read/open error
+
+jodyhash 4.1.1
+
+- Support Unicode file names on Windows
+- Add a simple benchmarking program
+- Tweak I/O block size for better performance
+- Add -b option for more md5sum drop-in compatibility
+
+jodyhash 4.1
+
+- Make hash configurable to 64/32/16 bit widths
+- Add -s option for md5sum-style output
+- Allow external modification of block size
+- Increase I/O block size
+- Fix stdin and multi-file handling
+
+jodyhash 4.0
+
+- Apply tail mask properly
+
+jodyhash 3.0.1
+
+- Use size_t in code where appropriate
+
+jodyhash 3.0
+
+- Improved hash function
+
+jodyhash 2.0.1
+
+- Cross-platform compatibility fix
+- Minor speed optimization
+
+jodyhash 2.0
+
+- Inproved hash function
+
+jodyhash 1.0
+
+- Initial release
