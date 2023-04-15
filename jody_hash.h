@@ -32,7 +32,7 @@ typedef jodyhash_t hash_t;
 #endif
 
 /* Version increments when algorithm changes incompatibly */
-#define JODY_HASH_VERSION 5
+#define JODY_HASH_VERSION 6
 
 extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 		const jodyhash_t start_hash, const size_t count);
