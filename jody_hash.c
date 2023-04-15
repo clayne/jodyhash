@@ -85,7 +85,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 {
 	const jodyhash_t s_constant = ROR2(JODY_HASH_CONSTANT);
 	jodyhash_t hash = start_hash;
-	jodyhash_t element, partial_constant;
+	jodyhash_t element, element2, partial_constant;
 	size_t len;
 
 	/* Don't bother trying to hash a zero-length block */
@@ -94,10 +94,11 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	len = count / sizeof(jodyhash_t);
 	for (; len > 0; len--) {
 		element = *data;
+		element2 = ROR(element);
+		element2 ^= s_constant;
 		hash += element;
 		hash += JODY_HASH_CONSTANT;
-		hash ^= ROR(element);
-		hash ^= s_constant;
+		hash ^= element2;
 		hash = ROL2(hash);
 		hash += element;
 		data++;
