@@ -26,6 +26,7 @@ Config.in
 /*.zip
 /*.pkg.tar.*
 /jodyhash-*-*/
+testsource*
 
 #
 # Backups / patches

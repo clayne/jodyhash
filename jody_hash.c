@@ -13,14 +13,12 @@
 #include <stdlib.h>
 #include "jody_hash.h"
 
-/* DO NOT modify the shift unless you know what you're doing.
- * This shift was decided upon after lots of testing and
- * changing it will likely cause lots of hash collisions. */
+/* DO NOT modify shifts/contants unless you know what
+ * you're doing. They were chosen after lots of testing.
+ * Changes will likely cause lots of hash collisions. */
 #ifndef JODY_HASH_SHIFT
 #define JODY_HASH_SHIFT 14
 #endif
-
-#define JH_SHIFT2 ((JODY_HASH_SHIFT * 2) - (((JODY_HASH_SHIFT * 2) > JODY_HASH_WIDTH) * JODY_HASH_WIDTH))
 
 /* The constant value's purpose is to cause each byte in the
  * jodyhash_t word to have a positionally dependent variation.
@@ -34,7 +32,9 @@
 
 /* Set hash parameters based on requested hash width */
 #if JODY_HASH_WIDTH == 64
-#define JODY_HASH_CONSTANT 0x1f3d5b79ULL
+#ifndef JODY_HASH_CONSTANT
+#define JODY_HASH_CONSTANT 0xf20596b93bd1a710ULL
+#endif
 static const jodyhash_t tail_mask[] = {
 	0x0000000000000000,
 	0x00000000000000ff,
@@ -48,7 +48,9 @@ static const jodyhash_t tail_mask[] = {
 };
 #endif /* JODY_HASH_WIDTH == 64 */
 #if JODY_HASH_WIDTH == 32
-#define JODY_HASH_CONSTANT 0x1f3d5b79U
+#ifndef JODY_HASH_CONSTANT
+#define JODY_HASH_CONSTANT 0xa682a37eU
+#endif
 static const jodyhash_t tail_mask[] = {
 	0x00000000,
 	0x000000ff,
@@ -58,7 +60,9 @@ static const jodyhash_t tail_mask[] = {
 };
 #endif /* JODY_HASH_WIDTH == 32 */
 #if JODY_HASH_WIDTH == 16
+#ifndef JODY_HASH_CONSTANT
 #define JODY_HASH_CONSTANT 0x1f5bU
+#endif
 static const jodyhash_t tail_mask[] = {
 	0x0000,
 	0x00ff,
@@ -66,6 +70,8 @@ static const jodyhash_t tail_mask[] = {
 };
 #endif /* JODY_HASH_WIDTH == 16 */
 
+/* Double-length shift for double-rotation optimization */
+#define JH_SHIFT2 ((JODY_HASH_SHIFT * 2) - (((JODY_HASH_SHIFT * 2) > JODY_HASH_WIDTH) * JODY_HASH_WIDTH))
 
 /* Macros for bitwise rotation */
 #define ROL(a)  (jodyhash_t)((a << JODY_HASH_SHIFT) | (a >> ((sizeof(jodyhash_t) * 8) - JODY_HASH_SHIFT)))
