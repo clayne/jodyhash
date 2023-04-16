@@ -105,9 +105,8 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	union UINT128 vec_constant, vec_constant_ror2;
 	size_t vec_allocsize;
 	int vec_constant_built = 0;
-	__m128i *aligned_data;
-	__m128i *aligned_data_e;
-	__m128i vec1, vec2, vec3, vec4, vec5, vec6, vec_const, vec_ror2;
+	__m128i *aligned_data, *aligned_data_e;
+	__m128i v1, v2, v3, v4, v5, v6, vec_const, vec_ror2;
 #endif
 
 
@@ -136,29 +135,29 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 		vec_const = _mm_load_si128(&vec_constant.v128);
 		vec_ror2  = _mm_load_si128(&vec_constant_ror2.v128);
 		for (size_t i = 0; i < len; i++) {
-			vec1 = _mm_load_si128(&aligned_data[i]);
-			vec3 = _mm_load_si128(&aligned_data[i]);
-			vec4 = _mm_load_si128(&aligned_data[i+1]);
-			vec6 = _mm_load_si128(&aligned_data[i+1]);
+			v1 = _mm_load_si128(&aligned_data[i]);
+			v3 = _mm_load_si128(&aligned_data[i]);
+			v4 = _mm_load_si128(&aligned_data[i+1]);
+			v6 = _mm_load_si128(&aligned_data[i+1]);
 			/* "element2" gets RORed */
-			vec1 = _mm_srli_epi64(vec1, JODY_HASH_SHIFT);
-			vec2 = _mm_slli_epi64(vec3, (64 - JODY_HASH_SHIFT));
-			vec1 = _mm_or_si128(vec1, vec2);
+			v1 = _mm_srli_epi64(v1, JODY_HASH_SHIFT);
+			v2 = _mm_slli_epi64(v3, (64 - JODY_HASH_SHIFT));
+			v1 = _mm_or_si128(v1, v2);
 			/* XOR against the ROR2 constant */
-			vec1 = _mm_xor_si128(vec1, vec_ror2);
+			v1 = _mm_xor_si128(v1, vec_ror2);
 			/* Do the next 128-bit word too */
-			vec4 = _mm_srli_epi64(vec4, JODY_HASH_SHIFT);
-			vec5 = _mm_slli_epi64(vec6, (64 - JODY_HASH_SHIFT));
-			vec4 = _mm_or_si128(vec4, vec5);
-			vec4 = _mm_xor_si128(vec4, vec_ror2);
+			v4 = _mm_srli_epi64(v4, JODY_HASH_SHIFT);
+			v5 = _mm_slli_epi64(v6, (64 - JODY_HASH_SHIFT));
+			v4 = _mm_or_si128(v4, v5);
+			v4 = _mm_xor_si128(v4, vec_ror2);
 			/* Add the constant to "element" */
-			vec3 = _mm_add_epi64(vec3, vec_const);
-			vec6 = _mm_add_epi64(vec6, vec_const);
+			v3 = _mm_add_epi64(v3, vec_const);
+			v6 = _mm_add_epi64(v6, vec_const);
 			/* Store everything */
-			_mm_store_si128(&aligned_data[i], vec1);
-			_mm_store_si128(&aligned_data[i+1], vec4);
-			_mm_store_si128(&aligned_data_e[i], vec3);
-			_mm_store_si128(&aligned_data_e[i+1], vec6);
+			_mm_store_si128(&aligned_data[i], v1);
+			_mm_store_si128(&aligned_data[i+1], v4);
+			_mm_store_si128(&aligned_data_e[i], v3);
+			_mm_store_si128(&aligned_data_e[i+1], v6);
 			for (size_t j = 0; j < 4; j++) {
 				element = *((uint64_t *)aligned_data_e + j);
 				element2 = *((uint64_t *)aligned_data + j);
