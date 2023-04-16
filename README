@@ -15,9 +15,8 @@ will print hashes plus file names with a leading asterisk. Remember that
 jodyhash is not a "secure hash function" so don't use it as a signature
 mechanism for authenticating anything!
 
-If you'd like to prevent jody_hash.h from defining hash_t for compatibility,
-just "#define JODY_HASH_NOCOMPAT" before you #include and it'll only use
-jodyhash_t.
+The 64-bit width version of the program has SSE2 optimizations. If you
+want to build without them, tell make: 'make NO_SIMD=1'
 
 Full disclosure: SMHasher's tests indicate this hash has undesirable
 properties and is slower than some other hashes. In practice I have only

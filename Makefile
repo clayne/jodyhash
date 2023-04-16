@@ -30,6 +30,12 @@ ifeq ($(OS), Windows_NT)
 	endif
 endif
 
+ifdef NO_SIMD
+BUILD_CFLAGS += -DNO_SIMD
+else
+BUILD_CFLAGS += -msse2
+endif
+
 all: jodyhash
 
 benchmark: jody_hash.o benchmark.o

@@ -14,6 +14,10 @@
 #include <string.h>
 #include "jody_hash.h"
 
+#if (JODY_HASH_WIDTH != 64)
+#define NO_SIMD
+#endif
+
 #ifndef NO_SIMD
 #include "platform_intrin.h"
 #endif
@@ -168,7 +172,9 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	}
 
 	return hash;
+#ifndef NO_SIMD
 oom:
+#endif
 	fprintf(stderr, "out of memory\n");
 	exit(EXIT_FAILURE);
 }
