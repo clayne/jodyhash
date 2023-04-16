@@ -107,7 +107,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	int vec_constant_built = 0;
 	__m128i *aligned_data;
 	__m128i *aligned_data_e;
-	__m128i vec1, vec2, vec3, vec_const, vec_ror2;
+	__m128i vec1, vec2, vec3, vec4, vec5, vec6, vec_const, vec_ror2;
 #endif
 
 
@@ -116,7 +116,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 
 #ifndef NOVEC
 	/* Use SSE2 if possible */
-	if (count > 15) {
+	if (count > 31) {
 		if (vec_constant_built == 0) {
 			vec_constant.v64[0]      = JODY_HASH_CONSTANT;
 			vec_constant.v64[1]      = JODY_HASH_CONSTANT;
@@ -124,14 +124,13 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 			vec_constant_ror2.v64[1] = JODY_HASH_CONSTANT_ROR2;
 			vec_constant_built = 1;
 		}
-		/* Only handle 16-byte sized chunks and leave the rest */
-		vec_allocsize =  count & 0xfffffffffffffff0U;
+		/* Only handle 32-byte sized chunks and leave the rest */
+		vec_allocsize =  count & 0xffffffffffffffe0U;
 		aligned_data_e = (__m128i *)aligned_alloc(32, vec_allocsize);
 		aligned_data  = (__m128i *)aligned_alloc(32, vec_allocsize);
 		if (!aligned_data_e || !aligned_data) goto oom;
 		memcpy(aligned_data, data, vec_allocsize);
-//OK	element = *data;
-		len = count / 16; // sizeof(__m128i)
+		len = count / 32; // sizeof(__m128i) * 2
 
 		/* Constants preload */
 		vec_const = _mm_load_si128(&vec_constant.v128);
@@ -139,31 +138,37 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 		for (size_t i = 0; i < len; i++) {
 			vec1 = _mm_load_si128(&aligned_data[i]);
 			vec3 = _mm_load_si128(&aligned_data[i]);
-			/* "element2" */
+			vec4 = _mm_load_si128(&aligned_data[i+1]);
+			vec6 = _mm_load_si128(&aligned_data[i+1]);
+			/* "element2" gets RORed */
 			vec1 = _mm_srli_epi64(vec1, JODY_HASH_SHIFT);
 			vec2 = _mm_slli_epi64(vec3, (64 - JODY_HASH_SHIFT));
 			vec1 = _mm_or_si128(vec1, vec2);
-//OK	element2 = ROR(element);
 			/* XOR against the ROR2 constant */
 			vec1 = _mm_xor_si128(vec1, vec_ror2);
-			_mm_store_si128(&aligned_data[i], vec1);
-//OK	element2 ^= s_constant;
+			/* Do the next 128-bit word too */
+			vec4 = _mm_srli_epi64(vec4, JODY_HASH_SHIFT);
+			vec5 = _mm_slli_epi64(vec6, (64 - JODY_HASH_SHIFT));
+			vec4 = _mm_or_si128(vec4, vec5);
+			vec4 = _mm_xor_si128(vec4, vec_ror2);
 			/* Add the constant to "element" */
 			vec3 = _mm_add_epi64(vec3, vec_const);
+			vec6 = _mm_add_epi64(vec6, vec_const);
+			/* Store everything */
+			_mm_store_si128(&aligned_data[i], vec1);
+			_mm_store_si128(&aligned_data[i+1], vec4);
 			_mm_store_si128(&aligned_data_e[i], vec3);
-//OK	hash += JODY_HASH_CONSTANT; - done by pre-adding to data
+			_mm_store_si128(&aligned_data_e[i+1], vec6);
+			for (size_t j = 0; j < 4; j++) {
+				element = *((uint64_t *)aligned_data_e + j);
+				element2 = *((uint64_t *)aligned_data + j);
+				hash += element;
+				hash ^= element2;
+				hash = ROL2(hash);
+				hash += element;
+			}
 		}
 
-		len = count / sizeof(__m128i) * 2;  // reset for second loop
-
-		for (size_t i = 0; i < len; i++) {
-			element = *((uint64_t *)aligned_data_e + i);
-			element2 = *((uint64_t *)aligned_data + i);
-			hash += element;
-			hash ^= element2;
-			hash = ROL2(hash);
-			hash += element;
-		}
 		free(aligned_data_e); free(aligned_data);
 		data += vec_allocsize / sizeof(jodyhash_t);
 		len = (count - vec_allocsize) / sizeof(jodyhash_t);
