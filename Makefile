@@ -2,7 +2,7 @@
 
 CC=gcc
 #CFLAGS=-Os -flto -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
-CFLAGS=-O2 -g -msse4
+CFLAGS=-O2 -g
 #CFLAGS=-Og -g3
 BUILD_CFLAGS = -std=gnu11 -I. -D_FILE_OFFSET_BITS=64 -fstrict-aliasing -pipe
 BUILD_CFLAGS += -Wall -Wextra -Wwrite-strings -Wcast-align -Wstrict-aliasing -pedantic -Wstrict-overflow -Wstrict-prototypes -Wpointer-arith -Wundef
