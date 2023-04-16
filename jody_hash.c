@@ -187,6 +187,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 			hash += element;
 //fprintf(stderr, "hash 5 [%ld]: %016lx\n", len, hash);
 		}
+		free(aligned_data_e); free(aligned_data);
 		data += vec_allocsize / sizeof(jodyhash_t);
 		len = (count - vec_allocsize) / sizeof(jodyhash_t);
 //fprintf(stderr, "data = %p, vec_allocsize %lu, len %lu\n", (const void *)data, vec_allocsize, len);
