@@ -46,7 +46,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 {
 	const jodyhash_t s_constant = JH_ROR2(JODY_HASH_CONSTANT);
 	jodyhash_t hash = start_hash;
-	jodyhash_t element, element2, partial_constant;
+	jodyhash_t element, element2;
 	size_t length = 0;
 
 #ifdef USE_SSE2
@@ -251,15 +251,14 @@ skip_sse:
 	/* Handle data tail (for blocks indivisible by sizeof(jodyhash_t)) */
 	length = count & (sizeof(jodyhash_t) - 1);
 	if (length) {
-		partial_constant = JODY_HASH_CONSTANT & tail_mask[length];
 		element = *data & tail_mask[length];
-		hash += partial_constant;
+		element2 = JH_ROR(element);
+		element2 ^= s_constant;
+		element += JODY_HASH_CONSTANT;
 		hash += element;
-		hash = JH_ROL(hash);
-		hash ^= element;
-		hash = JH_ROL(hash);
-		hash ^= partial_constant;
-		hash += element;
+		hash ^= element2;
+		hash = JH_ROL2(hash);
+		hash += element2;
 	}
 
 	return hash;
