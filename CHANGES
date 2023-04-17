@@ -1,3 +1,9 @@
+jodyhash 6.0
+
+- Improved hash constant (lower collision rate in a large test data set)
+- 64-bit width now has an optimized SSE2 implementation
+- More optimized algorithm
+
 jodyhash 5.1.2
 
 - Fix -B mode failing spectacularly
