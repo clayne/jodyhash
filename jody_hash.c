@@ -60,6 +60,8 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	/* Regs 1-12 used in groups of 3; 1=ROR/XOR work, 2=temp, 3=data+constant */
 	__m128i v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12;
 	__m128i vec_const, vec_ror2;
+	uint64_t *ep1;
+	uint64_t *ep2;
 #endif /* USE_SSE2 */
 
 	/* Don't bother trying to hash a zero-length block */
@@ -91,8 +93,8 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 			if (!aligned_data_e || !aligned_data) goto oom;
 			memcpy(aligned_data, data, vec_allocsize);
 
-			uint64_t *ep1 = (uint64_t *)(aligned_data_e);
-			uint64_t *ep2 = (uint64_t *)(aligned_data);
+			ep1 = (uint64_t *)(aligned_data_e);
+			ep2 = (uint64_t *)(aligned_data);
 			for (size_t i = 0; i < (vec_allocsize / 16); i += 4) {
 				v1  = _mm_load_si128(&aligned_data[i]);
 				v3  = _mm_load_si128(&aligned_data[i]);
@@ -173,8 +175,8 @@ skip_sse:
 			}
 			memcpy(aligned_data, data, vec_allocsize);
 
-			uint64_t *ep1 = (uint64_t *)(aligned_data_e);
-			uint64_t *ep2 = (uint64_t *)(aligned_data);
+			ep1 = (uint64_t *)(aligned_data_e);
+			ep2 = (uint64_t *)(aligned_data);
 			v1  = _mm_load_si128(&aligned_data[0]);
 			v3  = _mm_load_si128(&aligned_data[0]);
 			v4  = _mm_load_si128(&aligned_data[1]);
@@ -215,12 +217,12 @@ skip_sse:
 
 			/* Perform the rest of the hash normally */
 			for (size_t j = 0; j < dqwords; j++) {
-				element = *(ep1 + j);
-				element2 = *(ep2 + j);
-				hash += element;
-				hash ^= element2;
+				hash += *ep1;
+				hash ^= *ep2;
 				hash = JH_ROL2(hash);
-				hash += element;
+				hash += *ep1;
+				ep1++;
+				ep2++;
 			}
 
 			free(aligned_data_e);
