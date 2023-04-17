@@ -141,14 +141,13 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 
 				/* Perform the rest of the hash normally */
 				for (size_t j = 0; j < 8; j++) {
-					element = *(ep1 + j);
-					element2 = *(ep2 + j);
-					hash += element;
-					hash ^= element2;
+					hash += *ep1;
+					hash ^= *ep2;
 					hash = JH_ROL2(hash);
-					hash += element;
+					hash += *ep1;
+					ep1++;
+					ep2++;
 				}
-				ep1 += 8; ep2 += 8;
 			}
 			data += vec_allocsize / sizeof(jodyhash_t);
 			length = (count - vec_allocsize) / sizeof(jodyhash_t);
