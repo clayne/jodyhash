@@ -14,12 +14,21 @@
 #include <string.h>
 #include "jody_hash.h"
 
-#if (JODY_HASH_WIDTH != 64)
-#define NO_SIMD
+#if (JODY_HASH_WIDTH != 64) || (defined NO_SIMD)
+ #undef USE_SSE2
+ #ifndef NO_SIMD
+  #define NO_SIMD
+ #endif
 #endif
 
-#ifndef NO_SIMD
-#include "platform_intrin.h"
+#if !defined(NO_SIMD) && defined(__SSE2__)
+ #if defined(_MSC_VER)
+  /* Microsoft C/C++-compatible compiler */
+  #include <intrin.h>
+ #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+  /* GCC-compatible compiler, targeting x86/x86-64 */
+  #include <x86intrin.h>
+ #endif
 #endif
 
 
@@ -38,7 +47,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	jodyhash_t element, element2, partial_constant;
 	size_t length = 0;
 
-#ifndef NO_SIMD
+#ifdef USE_SSE2
 	union UINT128 {
 		__m128i  v128;
 		uint64_t v64[2];
@@ -46,17 +55,21 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	union UINT128 vec_constant, vec_constant_ror2;
 	size_t vec_allocsize;
 	__m128i *aligned_data, *aligned_data_e;
+	/* Regs 1-12 used in groups of 3; 1=ROR/XOR work, 2=temp, 3=data+constant */
 	__m128i v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12;
 	__m128i vec_const, vec_ror2;
-#endif
+#endif /* USE_SSE2 */
 
 
 	/* Don't bother trying to hash a zero-length block */
 	if (count == 0) return hash;
 
-#ifndef NO_SIMD
+#ifdef USE_SSE2
+#if defined (__GNUC__)
 	__builtin_cpu_init ();
-	if (__builtin_cpu_supports ("sse2")) {
+	if (__builtin_cpu_supports ("sse2"))
+#endif /* __GNUC__ */
+	{
 			/* Use SSE2 if possible */
 			vec_constant.v64[0]      = JODY_HASH_CONSTANT;
 			vec_constant.v64[1]      = JODY_HASH_CONSTANT;
@@ -87,7 +100,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 					v10 = _mm_load_si128(&aligned_data[i+3]);
 					v12 = _mm_load_si128(&aligned_data[i+3]);
 
-					/* "element2" gets RORed */
+					/* "element2" gets RORed (two logical shifts ORed together) */
 					v1  = _mm_srli_epi64(v1, JODY_HASH_SHIFT);
 					v2  = _mm_slli_epi64(v3, (64 - JODY_HASH_SHIFT));
 					v1  = _mm_or_si128(v1, v2);
@@ -142,7 +155,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 		}
 #else
 	length = count / sizeof(jodyhash_t);
-#endif /* NO_SIMD */
+#endif /* USE_SSE2 */
 
 	/* Handle tails or everything */
 	for (; length > 0; length--) {
@@ -172,7 +185,7 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	}
 
 	return hash;
-#ifndef NO_SIMD
+#ifdef USE_SSE2
 oom:
 #endif
 	fprintf(stderr, "out of memory\n");
