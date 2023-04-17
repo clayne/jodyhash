@@ -54,7 +54,7 @@
 #endif
 
 #ifndef BSIZE
-#define BSIZE 16384
+#define BSIZE 32768
 #endif
 
 static int error = EXIT_SUCCESS;

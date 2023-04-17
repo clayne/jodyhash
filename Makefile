@@ -37,6 +37,10 @@ else
 BUILD_CFLAGS += -msse2
 endif
 
+ifdef PERFBENCHMARK
+BUILD_CFLAGS += -DPERFBENCHMARK
+endif
+
 all: jodyhash
 
 benchmark: jody_hash.o benchmark.o
