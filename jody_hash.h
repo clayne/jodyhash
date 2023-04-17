@@ -59,7 +59,7 @@ static const jodyhash_t tail_mask[] = {
 #if JODY_HASH_WIDTH == 32
 typedef uint32_t jodyhash_t;
 #ifndef JODY_HASH_CONSTANT
-#define JODY_HASH_CONSTANT 0xa682a37eU
+#define JODY_HASH_CONSTANT 0x8748ee5dU
 #endif
 static const jodyhash_t tail_mask[] = {
 	0x00000000,
