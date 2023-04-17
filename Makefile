@@ -34,7 +34,9 @@ endif
 ifdef NO_SIMD
 BUILD_CFLAGS += -DNO_SIMD
 else
+ifdef __i386__
 BUILD_CFLAGS += -msse2
+endif
 endif
 
 ifdef PERFBENCHMARK
