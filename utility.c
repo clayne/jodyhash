@@ -16,6 +16,17 @@
 #include "jody_hash.h"
 #include "version.h"
 
+/* Linux perf benchmarking*/
+#if defined(__linux__) && defined(PERFBENCHMARK)
+ #define _GNU_SOURCE
+ #include <sys/ioctl.h>
+ #include <linux/perf_event.h>
+ #include <sys/syscall.h>
+ #include <sys/types.h>
+ #include <errno.h>
+ #define USE_PERF_CODE
+#endif
+
 /* Detect Windows and modify as needed */
 #if defined _WIN32 || defined __CYGWIN__
  #define ON_WINDOWS 1
@@ -108,6 +119,28 @@ int main(int argc, char **argv)
 	static int outmode = 0;
 	static int read_err = 0;
 	//intmax_t bytes = 0;
+
+#ifdef USE_PERF_CODE
+	struct perf_event_attr pe;
+	long long pcnt;
+	int fd;
+	/* From man perf_event_open(2) */
+	memset(&pe, 0, sizeof(struct perf_event_attr));
+	pe.type = PERF_TYPE_HARDWARE;
+	pe.size = sizeof(struct perf_event_attr);
+	pe.config = PERF_COUNT_HW_CPU_CYCLES;
+	pe.disabled = 1;
+	pe.exclude_kernel = 1;
+	// Don't count hypervisor events.
+	pe.exclude_hv = 1;
+	errno = 0;
+	fd = (int)syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
+	if (fd == -1) {
+		fprintf(stderr, "Error opening perf %llx: %s\n", pe.config, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+#endif /* USE_PERF_CODE */
 
 #ifdef UNICODE
 	static wchar_t wname[PATH_MAX];
@@ -222,9 +255,25 @@ int main(int argc, char **argv)
 					kblk++;
 					i -= kbdrop;
 				}
-			} else hash = jody_block_hash(blk, hash, i);
+			} else {
+#ifdef USE_PERF_CODE
+				/* perf benchmarked code */
+				ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
+				hash = jody_block_hash(blk, hash, i);
+				ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
+#else
+				/* non-benchmarked code */
+				hash = jody_block_hash(blk, hash, i);
+#endif /* USE_PERF_CODE */
+			}
 			if (feof(fp)) break;
 		}
+
+#ifdef USE_PERF_CODE
+		read(fd, &pcnt, sizeof(long long));
+		fprintf(stderr, "CPU cycles: %lld\n", pcnt);
+		close(fd);
+#endif /* USE_PERF_CODE */
 
 		/* Loop without result on read errors */
 		if (read_err == 1) {
