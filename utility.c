@@ -123,7 +123,14 @@ int main(int argc, char **argv)
 	/* Process options */
 	if (argc > 1) {
 		if (!strcmp("-v", argv[1])) {
-			fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
+			fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]%s\n",
+				VER, VERDATE, JODY_HASH_WIDTH,
+#if !defined(NO_SIMD) && defined(__SSE2__)
+				" SSE2 accelerated"
+#else
+				""
+#endif
+				);
 			exit(EXIT_SUCCESS);
 		}
 		if (!strcmp("-h", argv[1]) || !strcmp("--help", argv[1])) usage();
