@@ -30,6 +30,7 @@ ifeq ($(OS), Windows_NT)
 	endif
 endif
 
+# SIMD SSE2 implementation on x86 32-bit requires -msse2
 ifdef NO_SIMD
 BUILD_CFLAGS += -DNO_SIMD
 else
