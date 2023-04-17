@@ -42,8 +42,7 @@ extern "C" {
 #if JODY_HASH_WIDTH == 64
 typedef uint64_t jodyhash_t;
 #ifndef JODY_HASH_CONSTANT
-#define JODY_HASH_CONSTANT           0xf20596b93bd1a710ULL
-#define JODY_HASH_CONSTANT_ROR2      0xbd1a710f20596b93ULL
+#define JODY_HASH_CONSTANT           0x71812e0f5463d3c8ULL
 #endif
 static const jodyhash_t tail_mask[] = {
 	0x0000000000000000,
@@ -84,6 +83,7 @@ static const jodyhash_t tail_mask[] = {
 
 /* Double-length shift for double-rotation optimization */
 #define JH_SHIFT2 ((JODY_HASH_SHIFT * 2) - (((JODY_HASH_SHIFT * 2) > JODY_HASH_WIDTH) * JODY_HASH_WIDTH))
+#define JODY_HASH_CONSTANT_ROR2     (JODY_HASH_CONSTANT >> JH_SHIFT2 | (JODY_HASH_CONSTANT << ((sizeof(jodyhash_t) * 8) - JH_SHIFT2)))
 
 /* Macros for bitwise rotation */
 #define JH_ROL(a)  (jodyhash_t)((a << JODY_HASH_SHIFT) | (a >> ((sizeof(jodyhash_t) * 8) - JODY_HASH_SHIFT)))
