@@ -161,7 +161,7 @@ skip_sse:
 			length = count / sizeof(jodyhash_t);
 		}
 
-#ifndef NO_SSE_TAIL
+#ifdef USE_SSE_TAIL
 		/* SSE2 for 32-byte or 48-byte sized tail */
 		if (length >= 32) {
 			vec_allocsize = length & 48; // already know it's less than 64
@@ -229,7 +229,7 @@ skip_sse:
 			data += vec_allocsize / sizeof(jodyhash_t);
 			length -= dqwords;
 		}
-#endif /* notail */
+#endif /* USE_SSE_TAIL */
 	}
 #else
 	length = count / sizeof(jodyhash_t);
