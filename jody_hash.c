@@ -27,9 +27,11 @@
   /* Microsoft C/C++-compatible compiler */
   #include <intrin.h>
   #define aligned_alloc(a,b) _aligned_malloc(b,a)
+  #define ALIGNED_FREE(a) _aligned_free(a)
  #elif defined __GNUC__  && (defined __x86_64__  || defined __i386__ )
   /* GCC-compatible compiler, targeting x86/x86-64 */
   #include <x86intrin.h>
+  #define ALIGNED_FREE(a) free(a)
  #endif
 #endif
 
@@ -153,8 +155,8 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 			length = (count - vec_allocsize) / sizeof(jodyhash_t);
 			/* Reuse allocations in 32/48 section */
 			if (length < (32 / sizeof(jodyhash_t))) {
-				free(aligned_data_e);
-				free(aligned_data);
+				ALIGNED_FREE(aligned_data_e);
+				ALIGNED_FREE(aligned_data);
 			}
 		} else {
 skip_sse:
@@ -224,8 +226,8 @@ skip_sse:
 				ep2++;
 			}
 
-			free(aligned_data_e);
-			free(aligned_data);
+			ALIGNED_FREE(aligned_data_e);
+			ALIGNED_FREE(aligned_data);
 			data += vec_allocsize / sizeof(jodyhash_t);
 			length -= dqwords;
 		}
