@@ -14,7 +14,8 @@
 #include <string.h>
 #include "jody_hash.h"
 
-#if (JODY_HASH_WIDTH != 64) || defined(NO_SIMD)
+/* Disable SSE2 if not 64-bit width or not 64-bit x86 code */
+#if JODY_HASH_WIDTH != 64 || defined NO_SIMD || !defined __x86_64__ || !defined __SSE2__
  #undef USE_SSE2
  #ifndef NO_SIMD
   #define NO_SIMD
@@ -75,7 +76,12 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	if (__builtin_cpu_supports ("sse2"))
 #endif /* __GNUC__ */
 	{
-		if (count >= 32) {
+#ifdef USE_SSE_TAIL
+		if (count >= 32)
+#else
+		if (count >= 64)
+#endif
+		{
 			/* Use SSE2 if possible */
 			vec_constant.v64[0]      = JODY_HASH_CONSTANT;
 			vec_constant.v64[1]      = JODY_HASH_CONSTANT;

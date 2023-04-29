@@ -53,6 +53,13 @@
 #define PRINTHASH(a) printf("%04" PRIx16,a)
 #endif
 
+/* Disable SSE2 code if not 64-bit width or not 64-bit x86 code */
+#if JODY_HASH_WIDTH != 64 || defined NO_SIMD || !defined __x86_64__ || !defined __SSE2__
+ #ifndef NO_SIMD
+  #define NO_SIMD
+ #endif
+#endif
+
 #ifndef BSIZE
 #define BSIZE 32768
 #endif
@@ -60,9 +67,17 @@
 static int error = EXIT_SUCCESS;
 static char *progname;
 
-static void usage(void)
+static void usage(int detailed)
 {
-	fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]\n", VER, VERDATE, JODY_HASH_WIDTH);
+	fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]%s\n",
+		VER, VERDATE, JODY_HASH_WIDTH,
+#ifndef NO_SIMD
+		" SSE2 accelerated"
+#else
+		""
+#endif
+		);
+	if (detailed == 0) return;
 	fprintf(stderr, "usage: %s [-b|s|n|l|L] [file_to_hash]\n", progname);
 	fprintf(stderr, "Specifying no name or '-' as the name reads from stdin\n");
 	fprintf(stderr, "  -b|-s  Output in md5sum binary style instead of bare hashes\n");
@@ -70,7 +85,7 @@ static void usage(void)
 	fprintf(stderr, "  -l     Generate a hash for each text input line\n");
 	fprintf(stderr, "  -L     Same as -l but also prints hashed text after the hash\n");
 	fprintf(stderr, "  -B     Output a hash for every 4096 byte block of the file\n");
-	exit(error);
+	return;
 }
 
 #ifdef UNICODE
@@ -156,17 +171,13 @@ int main(int argc, char **argv)
 	/* Process options */
 	if (argc > 1) {
 		if (!strcmp("-v", argv[1])) {
-			fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]%s\n",
-				VER, VERDATE, JODY_HASH_WIDTH,
-#if !defined(NO_SIMD) && defined(__SSE2__)
-				" SSE2 accelerated"
-#else
-				""
-#endif
-				);
+			usage(0);
 			exit(EXIT_SUCCESS);
 		}
-		if (!strcmp("-h", argv[1]) || !strcmp("--help", argv[1])) usage();
+		if (!strcmp("-h", argv[1]) || !strcmp("--help", argv[1])) {
+			usage(1);
+			exit(EXIT_SUCCESS);
+		}
 	}
 	if (argc > 2) {
 		if (!strcmp("-s", argv[1]) || !strcmp("-b", argv[1])) outmode = 1;
