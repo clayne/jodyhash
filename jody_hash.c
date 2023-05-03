@@ -61,10 +61,9 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 	size_t vec_allocsize;
 	__m128i *aligned_data;
 	/* Regs 1-12 used in groups of 3; 1=ROR/XOR work, 2=temp, 3=data+constant */
-	__m128i v1, v2, v3;
+	__m128i v1, v2, v3, v4, v5, v6;
 	__m128 vzero;
 	__m128i vec_const, vec_ror2;
-	uint64_t ep1;
 #endif /* USE_SSE2 */
 
 	/* Don't bother trying to hash a zero-length block */
@@ -76,7 +75,7 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 	if (__builtin_cpu_supports ("sse2"))
 #endif /* __GNUC__ */
 	{
-		if (count >= 16) {
+		if (count >= 32) {
 			/* Use SSE2 if possible */
 			vec_constant.v64[0]      = JODY_HASH_CONSTANT;
 			vec_constant.v64[1]      = JODY_HASH_CONSTANT;
@@ -89,7 +88,7 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 			vzero = _mm_setzero_ps();
 
 			/* How much memory do we need to align the data? */
-			vec_allocsize = count & 0xfffffffffffffff0U;
+			vec_allocsize = count & 0xffffffffffffffe0U;
 			/* Only alloc/copy if not already aligned */
 			if (((uintptr_t)data & (uintptr_t)0x0fULL) != 0) {
 				aligned_data  = (__m128i *)aligned_alloc(16, vec_allocsize);
@@ -100,30 +99,59 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 			for (size_t i = 0; i < (vec_allocsize / 16); i++) {
 				v1  = _mm_load_si128(&aligned_data[i]);
 				v3  = _mm_load_si128(&aligned_data[i]);
+				i++;
+				v4  = _mm_load_si128(&aligned_data[i]);
+				v6  = _mm_load_si128(&aligned_data[i]);
 
 				/* "element2" gets RORed (two logical shifts ORed together) */
 				v1  = _mm_srli_epi64(v1, JODY_HASH_SHIFT);
 				v2  = _mm_slli_epi64(v3, (64 - JODY_HASH_SHIFT));
 				v1  = _mm_or_si128(v1, v2);
 				v1  = _mm_xor_si128(v1, vec_ror2);  // XOR against the ROR2 constant
+				v4  = _mm_srli_epi64(v4, JODY_HASH_SHIFT);
+				v5  = _mm_slli_epi64(v6, (64 - JODY_HASH_SHIFT));
+				v4  = _mm_or_si128(v4, v5);
+				v4  = _mm_xor_si128(v4, vec_ror2);  // XOR against the ROR2 constant
 
 				/* Add the constant to "element" */
 				v3  = _mm_add_epi64(v3,  vec_const);
+				v6  = _mm_add_epi64(v6,  vec_const);
 
-				/* Perform the rest of the hash normally */
-				/* Lower */
-				ep1 = (uint64_t)_mm_cvtsi128_si64x(v3);
-				hash += ep1;
-				hash ^= (uint64_t)_mm_cvtsi128_si64x(v1);
-				hash = JH_ROL2(hash);
-				hash += ep1;
-				/* Upper */
-				ep1 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v3))));
-				hash += ep1;
-				hash ^= (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v1))));
-				hash = JH_ROL2(hash);
-				hash += ep1;
-			}
+				/* Perform the rest of the hash */
+				for (int j = 0; j < 4; j++) {
+					uint64_t ep1, ep2;
+					switch (j) {
+						default:
+						case 0:
+						/* Lower v1-v3 */
+						ep1 = (uint64_t)_mm_cvtsi128_si64x(v3);
+						ep2 = (uint64_t)_mm_cvtsi128_si64x(v1);
+						break;
+
+						case 1:
+						/* Upper v1-v3 */
+						ep1 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v3))));
+						ep2 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v1))));
+						break;
+
+						case 2:
+						/* Lower v4-v6 */
+						ep1 = (uint64_t)_mm_cvtsi128_si64x(v6);
+						ep2 = (uint64_t)_mm_cvtsi128_si64x(v4);
+						break;
+
+						case 3:
+						/* Upper v4-v6 */
+						ep1 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v6))));
+						ep2 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v4))));
+						break;
+					}
+					hash += ep1;
+					hash ^= ep2;
+					hash = JH_ROL2(hash);
+					hash += ep1;
+				}  // End of hash finish loop
+			}  // End of main SSE for loop
 			data += vec_allocsize / sizeof(jodyhash_t);
 			length = (count - vec_allocsize) / sizeof(jodyhash_t);
 			if (((uintptr_t)data & (uintptr_t)0x0fULL) != 0) ALIGNED_FREE(aligned_data);
@@ -132,6 +160,9 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 		}
 
 	}
+#if defined (__GNUC__)
+	else length = count / sizeof(jodyhash_t);
+#endif
 #else
 	length = count / sizeof(jodyhash_t);
 #endif /* USE_SSE2 */
