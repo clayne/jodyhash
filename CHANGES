@@ -1,3 +1,7 @@
+jodyhash 6.1
+
+- Improved SSE2 implementation that's actually faster this time
+
 jodyhash 6.0
 
 - Improved hash constant (lower collision rate in a large test data set)
