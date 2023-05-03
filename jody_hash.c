@@ -44,7 +44,7 @@
  * of any amount of data. If data is not divisible by the size of
  * jodyhash_t, it is MANDATORY that the caller provide a data buffer
  * which is divisible by sizeof(jodyhash_t). */
-extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
+extern jodyhash_t jody_block_hash(jodyhash_t *data,
 		const jodyhash_t start_hash, const size_t count)
 {
 	const jodyhash_t s_constant = JH_ROR2(JODY_HASH_CONSTANT);
@@ -59,12 +59,12 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	};
 	union UINT128 vec_constant, vec_constant_ror2;
 	size_t vec_allocsize;
-	__m128i *aligned_data, *aligned_data_e = NULL;
+	__m128i *aligned_data;
 	/* Regs 1-12 used in groups of 3; 1=ROR/XOR work, 2=temp, 3=data+constant */
-	__m128i v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12;
+	__m128i v1, v2, v3;
+	__m128 vzero;
 	__m128i vec_const, vec_ror2;
-	uint64_t *ep1;
-	uint64_t *ep2;
+	uint64_t ep1;
 #endif /* USE_SSE2 */
 
 	/* Don't bother trying to hash a zero-length block */
@@ -76,168 +76,61 @@ extern jodyhash_t jody_block_hash(const jodyhash_t * restrict data,
 	if (__builtin_cpu_supports ("sse2"))
 #endif /* __GNUC__ */
 	{
-#ifdef USE_SSE_TAIL
-		if (count >= 32)
-#else
-		if (count >= 64)
-#endif
-		{
+		if (count >= 16) {
 			/* Use SSE2 if possible */
 			vec_constant.v64[0]      = JODY_HASH_CONSTANT;
 			vec_constant.v64[1]      = JODY_HASH_CONSTANT;
 			vec_constant_ror2.v64[0] = JODY_HASH_CONSTANT_ROR2;
 			vec_constant_ror2.v64[1] = JODY_HASH_CONSTANT_ROR2;
+
 			/* Constants preload */
 			vec_const = _mm_load_si128(&vec_constant.v128);
 			vec_ror2  = _mm_load_si128(&vec_constant_ror2.v128);
-		} else goto skip_sse;
+			vzero = _mm_setzero_ps();
 
-		/* SSE2 for 64 or larger byte chunks */
-		if (count >= 64) {
-			vec_allocsize =  count & 0xffffffffffffffc0U;
-			/* Only handle 64-byte sized chunks and leave the rest */
-			aligned_data_e = (__m128i *)aligned_alloc(32, vec_allocsize);
-			aligned_data  = (__m128i *)aligned_alloc(32, vec_allocsize);
-			if (!aligned_data_e || !aligned_data) goto oom;
-			memcpy(aligned_data, data, vec_allocsize);
+			/* How much memory do we need to align the data? */
+			vec_allocsize = count & 0xfffffffffffffff0U;
+			/* Only alloc/copy if not already aligned */
+			if (((uintptr_t)data & (uintptr_t)0x0fULL) != 0) {
+				aligned_data  = (__m128i *)aligned_alloc(16, vec_allocsize);
+				if (!aligned_data) goto oom;
+				memcpy(aligned_data, data, vec_allocsize);
+			} else aligned_data = (__m128i *)data;
 
-			ep1 = (uint64_t *)(aligned_data_e);
-			ep2 = (uint64_t *)(aligned_data);
-			for (size_t i = 0; i < (vec_allocsize / 16); i += 4) {
+			for (size_t i = 0; i < (vec_allocsize / 16); i++) {
 				v1  = _mm_load_si128(&aligned_data[i]);
 				v3  = _mm_load_si128(&aligned_data[i]);
-				v4  = _mm_load_si128(&aligned_data[i+1]);
-				v6  = _mm_load_si128(&aligned_data[i+1]);
-				v7  = _mm_load_si128(&aligned_data[i+2]);
-				v9  = _mm_load_si128(&aligned_data[i+2]);
-				v10 = _mm_load_si128(&aligned_data[i+3]);
-				v12 = _mm_load_si128(&aligned_data[i+3]);
 
 				/* "element2" gets RORed (two logical shifts ORed together) */
 				v1  = _mm_srli_epi64(v1, JODY_HASH_SHIFT);
 				v2  = _mm_slli_epi64(v3, (64 - JODY_HASH_SHIFT));
 				v1  = _mm_or_si128(v1, v2);
 				v1  = _mm_xor_si128(v1, vec_ror2);  // XOR against the ROR2 constant
-				v4  = _mm_srli_epi64(v4, JODY_HASH_SHIFT);  // Repeat for all vectors
-				v5  = _mm_slli_epi64(v6, (64 - JODY_HASH_SHIFT));
-				v4  = _mm_or_si128(v4, v5);
-				v4  = _mm_xor_si128(v4, vec_ror2);
-				v7  = _mm_srli_epi64(v7, JODY_HASH_SHIFT);
-				v8  = _mm_slli_epi64(v9, (64 - JODY_HASH_SHIFT));
-				v7  = _mm_or_si128(v7, v8);
-				v7  = _mm_xor_si128(v7, vec_ror2);
-				v10 = _mm_srli_epi64(v10, JODY_HASH_SHIFT);
-				v11 = _mm_slli_epi64(v12, (64 - JODY_HASH_SHIFT));
-				v10 = _mm_or_si128(v10, v11);
-				v10 = _mm_xor_si128(v10, vec_ror2);
 
 				/* Add the constant to "element" */
 				v3  = _mm_add_epi64(v3,  vec_const);
-				v6  = _mm_add_epi64(v6,  vec_const);
-				v9  = _mm_add_epi64(v9,  vec_const);
-				v12 = _mm_add_epi64(v12, vec_const);
-
-				/* Store everything */
-				_mm_store_si128(&aligned_data[i], v1);
-				_mm_store_si128(&aligned_data_e[i], v3);
-				_mm_store_si128(&aligned_data[i+1], v4);
-				_mm_store_si128(&aligned_data_e[i+1], v6);
-				_mm_store_si128(&aligned_data[i+2], v7);
-				_mm_store_si128(&aligned_data_e[i+2], v9);
-				_mm_store_si128(&aligned_data[i+3], v10);
-				_mm_store_si128(&aligned_data_e[i+3], v12);
 
 				/* Perform the rest of the hash normally */
-				for (size_t j = 0; j < 8; j++) {
-					hash += *ep1;
-					hash ^= *ep2;
-					hash = JH_ROL2(hash);
-					hash += *ep1;
-					ep1++;
-					ep2++;
-				}
+				/* Lower */
+				ep1 = (uint64_t)_mm_cvtsi128_si64x(v3);
+				hash += ep1;
+				hash ^= (uint64_t)_mm_cvtsi128_si64x(v1);
+				hash = JH_ROL2(hash);
+				hash += ep1;
+				/* Upper */
+				ep1 = (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v3))));
+				hash += ep1;
+				hash ^= (uint64_t)_mm_cvtsi128_si64x(_mm_castps_si128(_mm_movehl_ps(vzero, _mm_castsi128_ps(v1))));
+				hash = JH_ROL2(hash);
+				hash += ep1;
 			}
 			data += vec_allocsize / sizeof(jodyhash_t);
 			length = (count - vec_allocsize) / sizeof(jodyhash_t);
-			/* Reuse allocations in 32/48 section */
-			if (length < (32 / sizeof(jodyhash_t))) {
-				ALIGNED_FREE(aligned_data_e);
-				ALIGNED_FREE(aligned_data);
-			}
+			if (((uintptr_t)data & (uintptr_t)0x0fULL) != 0) ALIGNED_FREE(aligned_data);
 		} else {
-skip_sse:
 			length = count / sizeof(jodyhash_t);
 		}
 
-#ifdef USE_SSE_TAIL
-		/* SSE2 for 32-byte or 48-byte sized tail */
-		if (length >= 32) {
-			vec_allocsize = length & 48; // already know it's less than 64
-			size_t dqwords = vec_allocsize / 16;
-			/* Alloc only if there isn't a leftover block from 64-byte work */
-			if (aligned_data_e == NULL) {
-				aligned_data_e = (__m128i *)aligned_alloc(32, vec_allocsize);
-				aligned_data  = (__m128i *)aligned_alloc(32, vec_allocsize);
-				if (!aligned_data_e || !aligned_data) goto oom;
-			}
-			memcpy(aligned_data, data, vec_allocsize);
-
-			ep1 = (uint64_t *)(aligned_data_e);
-			ep2 = (uint64_t *)(aligned_data);
-			v1  = _mm_load_si128(&aligned_data[0]);
-			v3  = _mm_load_si128(&aligned_data[0]);
-			v4  = _mm_load_si128(&aligned_data[1]);
-			v6  = _mm_load_si128(&aligned_data[1]);
-
-			/* "element2" gets RORed (two logical shifts ORed together) */
-			v1  = _mm_srli_epi64(v1, JODY_HASH_SHIFT);
-			v2  = _mm_slli_epi64(v3, (64 - JODY_HASH_SHIFT));
-			v1  = _mm_or_si128(v1, v2);
-			v1  = _mm_xor_si128(v1, vec_ror2);  // XOR against the ROR2 constant
-			v4  = _mm_srli_epi64(v4, JODY_HASH_SHIFT);  // Repeat for all vectors
-			v5  = _mm_slli_epi64(v6, (64 - JODY_HASH_SHIFT));
-			v4  = _mm_or_si128(v4, v5);
-			v4  = _mm_xor_si128(v4, vec_ror2);
-
-			/* Add the constant to "element" */
-			v3  = _mm_add_epi64(v3,  vec_const);
-			v6  = _mm_add_epi64(v6,  vec_const);
-
-			/* 48 bytes wide? do the last 16 bytes */
-			if (dqwords == 3) {
-				v7  = _mm_load_si128(&aligned_data[2]);
-				v9  = _mm_load_si128(&aligned_data[2]);
-				v7  = _mm_srli_epi64(v7, JODY_HASH_SHIFT);
-				v8  = _mm_slli_epi64(v9, (64 - JODY_HASH_SHIFT));
-				v7  = _mm_or_si128(v7, v8);
-				v7  = _mm_xor_si128(v7, vec_ror2);
-				v9  = _mm_add_epi64(v9,  vec_const);
-				_mm_store_si128(&aligned_data[2], v7);
-				_mm_store_si128(&aligned_data_e[2], v9);
-			}
-
-			/* Store everything */
-			_mm_store_si128(&aligned_data[0], v1);
-			_mm_store_si128(&aligned_data_e[0], v3);
-			_mm_store_si128(&aligned_data[1], v4);
-			_mm_store_si128(&aligned_data_e[1], v6);
-
-			/* Perform the rest of the hash normally */
-			for (size_t j = 0; j < dqwords; j++) {
-				hash += *ep1;
-				hash ^= *ep2;
-				hash = JH_ROL2(hash);
-				hash += *ep1;
-				ep1++;
-				ep2++;
-			}
-
-			ALIGNED_FREE(aligned_data_e);
-			ALIGNED_FREE(aligned_data);
-			data += vec_allocsize / sizeof(jodyhash_t);
-			length -= dqwords;
-		}
-#endif /* USE_SSE_TAIL */
 	}
 #else
 	length = count / sizeof(jodyhash_t);
