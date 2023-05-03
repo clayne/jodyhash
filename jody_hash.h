@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /* Version increments when algorithm changes incompatibly */
-#define JODY_HASH_VERSION 6
+#define JODY_HASH_VERSION 7
 
 /* DO NOT modify shifts/contants unless you know what you're doing. They were
  * chosen after lots of testing. Changes will likely cause lots of hash

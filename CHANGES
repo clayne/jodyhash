@@ -1,3 +1,7 @@
+jodyhash 7.0
+
+- A constant was changed in 6.1, so a new version number was issued.
+
 jodyhash 6.1
 
 - Improved SSE2 implementation that's actually faster this time
