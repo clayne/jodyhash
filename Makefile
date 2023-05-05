@@ -78,10 +78,10 @@ test: jodyhash
 	./test.sh
 
 clean:
-	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz
+	rm -f *.o *~ .*un~ benchmark jodyhash$(SUFFIX) debug.log *.?.gz
 
-distclean:
-	rm -f *.o *~ .*un~ benchmark jodyhash debug.log *.?.gz *.pkg.tar.* *.zip
+distclean: clean
+	rm -f *.pkg.tar.* *.zip
 	rm -rf jodyhash-*-*/
 
 install: all
