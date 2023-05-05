@@ -36,8 +36,8 @@
   #include <intrin.h>
   #define aligned_alloc(a,b) _aligned_malloc(b,a)
   #define ALIGNED_FREE(a) _aligned_free(a)
- #elif defined __GNUC__  && (defined __x86_64__  || defined __i386__ )
-  /* GCC-compatible compiler, targeting x86/x86-64 */
+ #elif (defined __GNUC__  || defined __clang__ ) && (defined __x86_64__  || defined __i386__ )
+  /* GCC or Clang targeting x86/x86-64 */
   #include <x86intrin.h>
   #define ALIGNED_FREE(a) free(a)
  #endif
@@ -87,10 +87,10 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 	if (count == 0) return hash;
 
 #ifdef USE_AVX2
-#if defined (__GNUC__)
+#if defined __GNUC__ || defined __clang__
 	__builtin_cpu_init ();
 	if (__builtin_cpu_supports ("avx2"))
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __clang__ */
 	{
 		if (count >= 32) {
 			/* Use AVX2 if possible */
@@ -166,7 +166,7 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 		}
 
 	}
-#if defined (__GNUC__)
+#if defined __GNUC__ || defined __clang__
 	else length = count / sizeof(jodyhash_t);
 #endif
 #else
@@ -175,10 +175,15 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 
 
 #ifdef USE_SSE2
-#if defined (__GNUC__)
+#if defined __GNUC__ || defined __clang__
 	__builtin_cpu_init ();
+	if (__builtin_cpu_supports ("avx")) {
+		asm volatile ("vzeroall" : : :
+			"ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5", "ymm6", "ymm7",
+			"ymm8", "ymm9", "ymm10", "ymm11", "ymm12", "ymm13", "ymm14", "ymm15");
+	}
 	if (__builtin_cpu_supports ("sse2"))
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __clang__ */
 	{
 		if (count >= 32) {
 			/* Use SSE2 if possible */
@@ -265,7 +270,7 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 		}
 
 	}
-#if defined (__GNUC__)
+#if defined __GNUC__ || defined __clang__
 	else length = count / sizeof(jodyhash_t);
 #endif
 #else
