@@ -10,6 +10,15 @@ This will generate a 32-bit width version of the program. Obviously, the
 different widths are incompatible with each other. The program will tell
 you what bit width it was built for when invoked with the -v option.
 
+SSE2 and AVX2 acceleration are now supported. The default is to build an AVX2
+program. Currently, an AVX2 build will crash on a non-AVX2 machine due to the
+use of VEX instruction prefixes. To choose various acceleration options to
+include, try these (the last option disables both SSE and AVX):
+
+make NO_AVX2=1
+make NO_SSE2=1
+make NO_SIMD=1
+
 If you wish to plug jodyhash into any place where md5sum, sha1sum, and
 friends are already used, there is a basic compatibility option '-s' that
 will print hashes plus file names with a leading asterisk. Remember that

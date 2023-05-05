@@ -30,12 +30,19 @@ ifeq ($(OS), Windows_NT)
 	endif
 endif
 
-# SIMD SSE2 implementation on x86 32-bit requires -msse2
+# SIMD SSE2/AVX2 implementations may need these extra flags
 ifdef NO_SIMD
 BUILD_CFLAGS += -DNO_SIMD
 else
-ifdef __i386__
+ifdef NO_SSE2
+BUILD_CFLAGS += -DNO_SSE2
+else
 BUILD_CFLAGS += -msse2
+endif
+ifdef NO_AVX2
+BUILD_CFLAGS += -DNO_AVX2
+else
+BUILD_CFLAGS += -mavx2
 endif
 endif
 
