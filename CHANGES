@@ -1,3 +1,8 @@
+jodyhash 7.1
+
+- Add AVX2 acceleration
+- Enhance Makefile so AVX2 and SSE2 can be disabled easily (see README)
+
 jodyhash 7.0
 
 - A constant was changed in 6.1, so a new version number was issued.
