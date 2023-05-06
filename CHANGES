@@ -1,3 +1,7 @@
+jodyhash 7.2
+
+- Rewrite SIMD code to avoid VEX prefix-caused crashes on non-AVX CPUs
+
 jodyhash 7.1
 
 - Add AVX2 acceleration
