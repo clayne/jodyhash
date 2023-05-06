@@ -34,15 +34,16 @@ endif
 ifdef NO_SIMD
 BUILD_CFLAGS += -DNO_SIMD
 else
+SIMD_OBJS += jody_hash_simd.o
 ifdef NO_SSE2
 BUILD_CFLAGS += -DNO_SSE2
 else
-BUILD_CFLAGS += -msse2
+SIMD_OBJS += jody_hash_sse2.o
 endif
 ifdef NO_AVX2
 BUILD_CFLAGS += -DNO_AVX2
 else
-BUILD_CFLAGS += -mavx2
+SIMD_OBJS += jody_hash_avx2.o
 endif
 endif
 
@@ -57,8 +58,17 @@ benchmark: jody_hash.o benchmark.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(CFLAGS_EXTRA) -o benchmark jody_hash.o benchmark.o
 	./benchmark 1000000
 
-jodyhash: jody_hash.o utility.o $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o utility.o $(OBJS)
+jodyhash: jody_hash.o utility.o $(OBJS) $(SIMD_OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o utility.o $(OBJS) $(SIMD_OBJS)
+
+jody_hash_simd.o:
+	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -mavx2 -c -o jody_hash_simd.o jody_hash_simd.c
+
+jody_hash_avx2.o: jody_hash_simd.o
+	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -mavx2 -c -o jody_hash_avx2.o jody_hash_avx2.c
+
+jody_hash_sse2.o: jody_hash_simd.o
+	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -msse2 -c -o jody_hash_sse2.o jody_hash_sse2.c
 
 .c.o:
 	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) $<

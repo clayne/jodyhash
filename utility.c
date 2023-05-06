@@ -14,6 +14,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include "jody_hash.h"
+#include "jody_hash_simd.h"
 #include "version.h"
 
 /* Linux perf benchmarking*/

@@ -13,7 +13,7 @@ you what bit width it was built for when invoked with the -v option.
 SSE2 and AVX2 acceleration are now supported. The default is to build an AVX2
 program. Currently, an AVX2 build will crash on a non-AVX2 machine due to the
 use of VEX instruction prefixes. To choose various acceleration options to
-include, try these (the last option disables both SSE and AVX):
+include, try these (the last option disables both SSE2 and AVX2):
 
 make NO_AVX2=1
 make NO_SSE2=1
