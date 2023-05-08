@@ -54,23 +54,6 @@
 #define PRINTHASH(a) printf("%04" PRIx16,a)
 #endif
 
-/* Disable SIMD code if not 64-bit width or not 64-bit x86 code */
-#if JODY_HASH_WIDTH != 64 || defined NO_SIMD || !defined __x86_64__
- #ifndef NO_SIMD
-  #define NO_SIMD
-  #undef USE_SSE2
-  #undef USE_AVX2
- #endif
-#endif
-#if !defined NO_SIMD
- #if defined __AVX2__ && !defined NO_AVX2
- #define USE_AVX2
- #endif
- #if defined __SSE2__ && !defined NO_SSE2
- #define USE_SSE2
- #endif
-#endif
-
 #ifndef BSIZE
 #define BSIZE 32768
 #endif
@@ -82,11 +65,11 @@ static void usage(int detailed)
 {
 	fprintf(stderr, "Jody Bruchon's hashing utility %s (%s) [%d bit width]%s\n",
 		VER, VERDATE, JODY_HASH_WIDTH,
-#if defined USE_AVX2 && defined USE_SSE2
+#if !defined NO_AVX2 && !defined NO_SSE2
 		" AVX2/SSE2 accelerated"
-#elif defined USE_AVX2
+#elif !defined NO_AVX2
 		" AVX2 accelerated"
-#elif defined USE_SSE2
+#elif !defined NO_SSE2
 		" SSE2 accelerated"
 #else
 		" standard"

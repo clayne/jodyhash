@@ -34,7 +34,7 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 	/* Don't bother trying to hash a zero-length block */
 	if (count == 0) return hash;
 
-#ifdef USE_AVX2
+#ifndef NO_AVX2
 #if defined __GNUC__ || defined __clang__
 	__builtin_cpu_init ();
 	if (__builtin_cpu_supports ("avx2")) {
@@ -48,10 +48,10 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 #endif
 #else
 	length = count / sizeof(jodyhash_t);
-#endif /* USE_AVX2 */
+#endif /* NO_AVX2 */
 
 
-#ifdef USE_SSE2
+#ifndef NO_SSE2
 #if defined __GNUC__ || defined __clang__
 	__builtin_cpu_init ();
 	if (__builtin_cpu_supports ("sse2")) {
@@ -63,9 +63,9 @@ extern jodyhash_t jody_block_hash(jodyhash_t *data,
 #endif
 #else
 	length = count / sizeof(jodyhash_t);
-#endif /* USE_SSE2 */
+#endif /* NO_SSE2 */
 
-#ifdef USE_AVX2
+#ifndef NO_AVX2
 skip_sse2:
 #endif
 	/* Hash everything (normal) or remaining small tails (SSE2) */

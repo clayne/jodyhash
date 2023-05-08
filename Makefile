@@ -32,7 +32,7 @@ endif
 
 # SIMD SSE2/AVX2 implementations may need these extra flags
 ifdef NO_SIMD
-BUILD_CFLAGS += -DNO_SIMD
+BUILD_CFLAGS += -DNO_SIMD -DNO_SSE2 -DNO_AVX2
 else
 SIMD_OBJS += jody_hash_simd.o
 ifdef NO_SSE2
@@ -62,7 +62,7 @@ jodyhash: jody_hash.o utility.o $(OBJS) $(SIMD_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -o jodyhash jody_hash.o utility.o $(OBJS) $(SIMD_OBJS)
 
 jody_hash_simd.o:
-	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -mavx2 -c -o jody_hash_simd.o jody_hash_simd.c
+	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -mavx2 -msse2 -c -o jody_hash_simd.o jody_hash_simd.c
 
 jody_hash_avx2.o: jody_hash_simd.o
 	$(CC) $(CFLAGS) $(BUILD_CFLAGS) $(WIN_CFLAGS) $(CFLAGS_EXTRA) -mavx2 -c -o jody_hash_avx2.o jody_hash_avx2.c
