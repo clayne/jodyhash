@@ -24,8 +24,7 @@ static const jodyhash_t jh_s_constant = JH_ROR2(JODY_HASH_CONSTANT);
  * of any amount of data. If data is not divisible by the size of
  * jodyhash_t, it is MANDATORY that the caller provide a data buffer
  * which is divisible by sizeof(jodyhash_t). */
-extern jodyhash_t jody_block_hash(jodyhash_t *data,
-		const jodyhash_t start_hash, const size_t count)
+extern jodyhash_t jody_block_hash(jodyhash_t *data, const jodyhash_t start_hash, const size_t count)
 {
 	jodyhash_t hash = start_hash;
 	jodyhash_t element, element2;
