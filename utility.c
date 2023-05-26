@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <fcntl.h>
+#include "likely_unlikely.h"
 #include "jody_hash.h"
 #include "jody_hash_simd.h"
 #include "version.h"
@@ -97,7 +98,7 @@ static void widearg_to_argv(int argc, wchar_t **wargv, char **argv)
 	for (int counter = 0; counter < argc; counter++) {
 		len = WideCharToMultiByte(CP_UTF8, 0, wargv[counter],
 				-1, (LPSTR)&temp, PATH_MAX * 2, NULL, NULL);
-		if (len < 1) goto error_wc2mb;
+		if (unlikely(len < 1)) goto error_wc2mb;
 
 		argv[counter] = (char *)malloc((size_t)len + 1);
 		if (!argv[counter]) goto error_oom;
