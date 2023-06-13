@@ -220,9 +220,7 @@ int main(int argc, char **argv)
 				hash = 0;
 				if (ferror(fp)) {
 					fprintf(stderr, "error reading file: ");
-					ERR(wname, name);
-					error = EXIT_FAILURE; read_err = 1;
-					break;
+					goto error_loop1;
 				}
 				/* Skip empty lines */
 				i = strlen((char *)blk);
@@ -231,20 +229,27 @@ int main(int argc, char **argv)
 				if (((char *)blk)[i - 2] == '\r') ((char *)blk)[i - 2] = '\0';
 				else ((char *)blk)[i - 1] = '\0';
 
-				hash = jody_block_hash(blk, hash, i - 1);
+				if (jody_block_hash(blk, &hash, i - 1) != 0) {
+					fprintf(stderr, "error hashing file: ");
+					goto error_loop1;
+				}
 
 				PRINTHASH(hash);
 				if (outmode == 3) printf(" '%s'\n", (char *)blk);
 				else printf("\n");
 
 				if (feof(fp)) break;
+				continue;
+error_loop1:
+				ERR(wname, name);
+				error = EXIT_FAILURE; read_err = 1;
+				break;
 			}
 			goto close_file;
 		}
 
 		while ((i = fread((void *)blk, 1, BSIZE, fp))) {
 			if (ferror(fp)) {
-				fprintf(stderr, "error reading file: ");
 				ERR(wname, name);
 				error = EXIT_FAILURE; read_err = 1;
 				break;
@@ -260,20 +265,36 @@ int main(int argc, char **argv)
 				while (i > 0) {
 					hash = 0;
 					kbdrop = (i > kbsize) ? kbsize : i;
-					hash = jody_block_hash(blk + (kblk * kboffsize), hash, kbdrop);
+					if (jody_block_hash(blk + (kblk * kboffsize), &hash, kbdrop) != 0) goto error_loop2;
 					PRINTHASH(hash); printf("\n");
 					kblk++;
 					i -= kbdrop;
+					continue;
+error_loop2:
+					fprintf(stderr, "error hashing file: ");
+					ERR(wname, name);
+					error = EXIT_FAILURE; read_err = 1;
+					break;
 				}
 			} else {
 #ifdef USE_PERF_CODE
 				/* perf benchmarked code */
 				ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
-				hash = jody_block_hash(blk, hash, i);
+				if (jody_block_hash(blk, &hash, i) != 0) {
+					fprintf(stderr, "error hashing file: ");
+					ERR(wname, name);
+					error = EXIT_FAILURE; read_err = 1;
+					break;
+				}
 				ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
 #else
 				/* non-benchmarked code */
-				hash = jody_block_hash(blk, hash, i);
+				if (jody_block_hash(blk, &hash, i) != 0) {
+					fprintf(stderr, "error hashing file: ");
+					ERR(wname, name);
+					error = EXIT_FAILURE; read_err = 1;
+					break;
+				}
 #endif /* USE_PERF_CODE */
 			}
 			if (feof(fp)) break;
