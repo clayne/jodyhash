@@ -84,6 +84,7 @@ static void usage(int detailed)
 	fprintf(stderr, "  -l     Generate a hash for each text input line\n");
 	fprintf(stderr, "  -L     Same as -l but also prints hashed text after the hash\n");
 	fprintf(stderr, "  -B     Output a hash for every 4096 byte block of the file\n");
+	fprintf(stderr, "  -r     Output a rolling 4K hash\n");
 	return;
 }
 
@@ -184,6 +185,7 @@ int main(int argc, char **argv)
 		if (!strcmp("-L", argv[1])) outmode = 3;
 		if (!strcmp("-n", argv[1])) outmode = 4;
 		if (!strcmp("-B", argv[1])) outmode = 5;
+		if (!strcmp("-r", argv[1])) outmode = 6;
 		if (outmode > 0 || !strcmp("--", argv[1])) argnum++;
 	}
 
@@ -280,7 +282,8 @@ error_loop2:
 #ifdef USE_PERF_CODE
 				/* perf benchmarked code */
 				ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
-				if (jody_block_hash(blk, &hash, i) != 0) {
+				if ((outmode == 6 ? jody_rolling_block_hash(blk, &hash, i)
+						: jody_block_hash(blk, &hash, i)) != 0) {
 					fprintf(stderr, "error hashing file: ");
 					ERR(wname, name);
 					error = EXIT_FAILURE; read_err = 1;
@@ -289,7 +292,9 @@ error_loop2:
 				ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
 #else
 				/* non-benchmarked code */
-				if (jody_block_hash(blk, &hash, i) != 0) {
+				fprintf(stderr, "doing a rolling hash of %lu bytes\n", i);
+				if ((outmode == 6 ? jody_rolling_block_hash(blk, &hash, i)
+						: jody_block_hash(blk, &hash, i)) != 0) {
 					fprintf(stderr, "error hashing file: ");
 					ERR(wname, name);
 					error = EXIT_FAILURE; read_err = 1;
